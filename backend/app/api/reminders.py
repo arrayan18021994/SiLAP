@@ -8,11 +8,13 @@ router = APIRouter()
 
 @router.get("/")
 def get_reminders(db: Session = Depends(get_db)):
+    ReminderEngine.refresh_child_age_reminders(db)
     return db.query(ReminderRecord).filter(ReminderRecord.is_dismissed == False, ReminderRecord.status != "COMPLETED").all()
 
 @router.post("/refresh")
 def refresh_reminders(db: Session = Depends(get_db)):
     ReminderEngine.refresh_gaji_berkala(db)
+    ReminderEngine.refresh_child_age_reminders(db)
     return {"status": "success"}
 
 @router.post("/{id}/dismiss")

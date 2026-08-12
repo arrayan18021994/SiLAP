@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import DateInput, { toDisplayFormat } from '../../components/DateInput';
+import DateInput from '../../components/DateInput';
 import ConfirmModal from '../../components/ConfirmModal';
 import './Employees.css';
 
@@ -226,21 +226,72 @@ const EmployeeList: React.FC = () => {
     resetModalState();
   };
 
-  const filteredEmployees = employees.filter(emp => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = !searchTerm ||
-      (emp.nip && emp.nip.toLowerCase().includes(searchLower)) ||
-      (emp.name && emp.name.toLowerCase().includes(searchLower)) ||
-      (emp.full_name && emp.full_name.toLowerCase().includes(searchLower)) ||
-      (emp.position && emp.position.toLowerCase().includes(searchLower)) ||
-      (emp.opd && emp.opd.toLowerCase().includes(searchLower));
+  const getRankScore = (rankStr?: string): number => {
+    if (!rankStr || rankStr === '-') return 0;
+    const r = String(rankStr).trim().toUpperCase();
+    const scores: Record<string, number> = {
+      'IV/E': 45, 'IV/D': 44, 'IV/C': 43, 'IV/B': 42, 'IV/A': 41,
+      'III/D': 34, 'III/C': 33, 'III/B': 32, 'III/A': 31,
+      'II/D': 24, 'II/C': 23, 'II/B': 22, 'II/A': 21,
+      'I/D': 14, 'I/C': 13, 'I/B': 12, 'I/A': 11,
+    };
+    if (scores[r]) return scores[r];
+    const romanScores: Record<string, number> = {
+      'XVII': 17, 'XVI': 16, 'XV': 15, 'XIV': 14, 'XIII': 13, 'XII': 12, 'XI': 11,
+      'X': 10, 'IX': 9, 'VIII': 8, 'VII': 7, 'VI': 6, 'V': 5, 'IV': 4, 'III': 3, 'II': 2, 'I': 1
+    };
+    for (const [k, v] of Object.entries(romanScores)) {
+      if (r.includes(k)) return v;
+    }
+    return 0;
+  };
 
-    const matchesStatus = !statusFilter ||
-      (emp.status && emp.status.toUpperCase().includes(statusFilter.toUpperCase())) ||
-      (emp.asn_status && emp.asn_status.toUpperCase().includes(statusFilter.toUpperCase()));
+  const getAsnStatusScore = (statusStr?: string): number => {
+    if (!statusStr) return 99;
+    const st = String(statusStr).trim().toUpperCase();
+    if (st.includes('PARUH') || st.includes('PART')) return 3;
+    if (st.includes('PENUH') || st.includes('FULL') || st.includes('PPPK')) return 2;
+    if (st.includes('PNS')) return 1;
+    return 4;
+  };
 
-    return matchesSearch && matchesStatus;
-  });
+  const filteredEmployees = employees
+    .filter(emp => {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm ||
+        (emp.nip && emp.nip.toLowerCase().includes(searchLower)) ||
+        (emp.name && emp.name.toLowerCase().includes(searchLower)) ||
+        (emp.full_name && emp.full_name.toLowerCase().includes(searchLower)) ||
+        (emp.position && emp.position.toLowerCase().includes(searchLower)) ||
+        (emp.opd && emp.opd.toLowerCase().includes(searchLower));
+
+      const matchesStatus = !statusFilter ||
+        (emp.status && emp.status.toUpperCase().includes(statusFilter.toUpperCase())) ||
+        (emp.asn_status && emp.asn_status.toUpperCase().includes(statusFilter.toUpperCase()));
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      // 1. Status ASN: PNS -> PPPK Penuh Waktu -> PPPK Paruh Waktu
+      const asnA = getAsnStatusScore(a.status || a.asn_status);
+      const asnB = getAsnStatusScore(b.status || b.asn_status);
+      if (asnA !== asnB) return asnA - asnB;
+
+      // 2. Golongan: IV highest down to I
+      const rankA = getRankScore(a.rank);
+      const rankB = getRankScore(b.rank);
+      if (rankA !== rankB) return rankB - rankA;
+
+      // 3. MKG: Largest total months first
+      const mkgA = (Number(a.mkg_years || 0) * 12) + Number(a.mkg_months || 0);
+      const mkgB = (Number(b.mkg_years || 0) * 12) + Number(b.mkg_months || 0);
+      if (mkgA !== mkgB) return mkgB - mkgA;
+
+      // 4. NIP: Oldest birth year first (ascending)
+      const nipA = String(a.nip || '');
+      const nipB = String(b.nip || '');
+      return nipA.localeCompare(nipB);
+    });
 
   return (
     <div className="employee-list-container">
@@ -277,20 +328,21 @@ const EmployeeList: React.FC = () => {
           <thead>
             <tr>
               <th>NIP</th>
-              <th>Nama</th>
-              <th>Status ASN</th>
-              <th>Golongan</th>
-              <th>Jabatan</th>
-              <th>Masa Kerja Golongan</th>
-              <th>TMT MKG</th>
-              <th>Aksi</th>
+              <th>NAMA</th>
+              <th>STATUS ASN</th>
+              <th>GOLONGAN</th>
+              <th>JABATAN</th>
+              <th>MKG</th>
+              <th>STATUS PERKAWINAN</th>
+              <th>JUMLAH ANAK</th>
+              <th>AKSI</th>
             </tr>
           </thead>
           <tbody>
             {filteredEmployees.map(emp => (
               <tr key={emp.id}>
-                <td>{emp.nip}</td>
-                <td>{emp.name || emp.full_name}</td>
+                <td style={{ fontWeight: 600 }}>{emp.nip}</td>
+                <td style={{ fontWeight: 600 }}>{emp.name || emp.full_name}</td>
                 <td>
                   <span className={`badge ${emp.status && emp.status.toLowerCase().includes('pns') ? 'badge-normal' : 'badge-attention'}`}>
                     {emp.status || emp.asn_status}
@@ -301,8 +353,9 @@ const EmployeeList: React.FC = () => {
                 <td>
                   <strong>{emp.mkg_years || 0} Thn {emp.mkg_months || 0} Bln</strong>
                 </td>
+                <td>{emp.marital_status || 'KAWIN'}</td>
                 <td>
-                  {emp.tmt_mkg_formatted || toDisplayFormat(emp.tmt_mkg) || '-'}
+                  {emp.children_count !== undefined ? `${emp.children_count} Anak` : (emp.children ? `${emp.children.length} Anak` : '0 Anak')}
                 </td>
                 <td>
                   <Link to={`/dashboard/employees/${emp.id}`} className="btn-text">Detail</Link>
@@ -311,7 +364,7 @@ const EmployeeList: React.FC = () => {
             ))}
             {filteredEmployees.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                   Tidak ada data pegawai yang ditemukan.
                 </td>
               </tr>
@@ -335,36 +388,36 @@ const EmployeeList: React.FC = () => {
           background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center',
           justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(2px)'
         }}>
-          <div className="card" style={{
-            width: '820px', maxWidth: '94vw', maxHeight: '92vh', overflowY: 'auto',
-            padding: '1.75rem', background: '#ffffff', borderRadius: '12px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          <div className="card compact-modal-card" style={{
+            width: '920px', maxWidth: '96vw', maxHeight: '96vh', overflowY: 'auto',
+            padding: '1rem 1.25rem', background: '#ffffff', borderRadius: '10px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            <div className="compact-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)' }}>Tambah Pegawai Baru (Manual)</h3>
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Isi formulir data pegawai dan keluarga secara bertahap</span>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Tambah Pegawai Baru (Manual)</h3>
+                <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Isi formulir data pegawai dan keluarga secara bertahap</span>
               </div>
               <button
                 type="button"
                 onClick={handleRequestClose}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b' }}
               >
                 &times;
               </button>
             </div>
 
             {/* Step Wizard Indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #e2e8f0' }}>
+            <div className="compact-wizard-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', background: '#f8fafc', padding: '0.3rem 0.75rem', borderRadius: '6px', marginBottom: '0.45rem', border: '1px solid #e2e8f0' }}>
               <div 
                 onClick={() => setCurrentStep(1)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', opacity: currentStep === 1 ? 1 : 0.6 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 1 ? 1 : 0.6 }}
               >
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep === 1 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>1</div>
-                <span style={{ fontSize: '0.85rem', fontWeight: currentStep === 1 ? 700 : 500, color: currentStep === 1 ? '#1e293b' : '#64748b' }}>Data Pegawai</span>
+                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 1 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>1</div>
+                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 1 ? 700 : 500, color: currentStep === 1 ? '#1e293b' : '#64748b' }}>Data Pegawai</span>
               </div>
 
-              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.75rem' }}></div>
+              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.5rem' }}></div>
 
               <div 
                 onClick={() => {
@@ -374,13 +427,13 @@ const EmployeeList: React.FC = () => {
                   }
                   setCurrentStep(2);
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', opacity: currentStep === 2 ? 1 : 0.6 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 2 ? 1 : 0.6 }}
               >
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep === 2 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>2</div>
-                <span style={{ fontSize: '0.85rem', fontWeight: currentStep === 2 ? 700 : 500, color: currentStep === 2 ? '#1e293b' : '#64748b' }}>Data Pasangan</span>
+                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 2 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>2</div>
+                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 2 ? 700 : 500, color: currentStep === 2 ? '#1e293b' : '#64748b' }}>Data Pasangan</span>
               </div>
 
-              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.75rem' }}></div>
+              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.5rem' }}></div>
 
               <div 
                 onClick={() => {
@@ -390,10 +443,10 @@ const EmployeeList: React.FC = () => {
                   }
                   setCurrentStep(3);
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', opacity: currentStep === 3 ? 1 : 0.6 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 3 ? 1 : 0.6 }}
               >
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep === 3 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>3</div>
-                <span style={{ fontSize: '0.85rem', fontWeight: currentStep === 3 ? 700 : 500, color: currentStep === 3 ? '#1e293b' : '#64748b' }}>Data Anak</span>
+                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 3 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>3</div>
+                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 3 ? 700 : 500, color: currentStep === 3 ? '#1e293b' : '#64748b' }}>Data Anak</span>
               </div>
             </div>
 
@@ -401,48 +454,48 @@ const EmployeeList: React.FC = () => {
               {/* STEP 1: DATA PEGAWAI */}
               {currentStep === 1 && (
                 <div>
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                  <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                    <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                       1. Data Utama Pegawai
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                    <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIP *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIP *</label>
                         <input type="text" name="nip" value={formData.nip} onChange={handleInputChange} placeholder="18 digit NIP" required />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Nama & Gelar *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nama & Gelar *</label>
                         <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Contoh: Ahmad Budi, S.E." required />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIK</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIK</label>
                         <input type="text" name="nik" value={formData.nik} onChange={handleInputChange} placeholder="16 digit NIK" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Jenis Kelamin *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jenis Kelamin *</label>
                         <select name="gender" value={formData.gender} onChange={handleInputChange}>
                           <option value="L">Laki-laki (L)</option>
                           <option value="P">Perempuan (P)</option>
                         </select>
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tempat Lahir *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tempat Lahir *</label>
                         <input type="text" name="birth_place" value={formData.birth_place} onChange={handleInputChange} placeholder="Kota/Kabupaten" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal Lahir *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Lahir *</label>
                         <DateInput name="birth_date" value={formData.birth_date} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                  <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                    <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                       2. Status Kepegawaian & Masa Kerja Golongan
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                    <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Status ASN *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Status ASN *</label>
                         <select name="status" value={formData.status} onChange={handleInputChange}>
                           <option value="PNS">PNS</option>
                           <option value="PPPK Penuh Waktu">PPPK Penuh Waktu</option>
@@ -450,11 +503,11 @@ const EmployeeList: React.FC = () => {
                         </select>
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>TMT ASN / CPNS</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>TMT ASN / CPNS</label>
                         <DateInput name="tmt_cpns" value={formData.tmt_cpns} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Status Perkawinan *</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Status Perkawinan *</label>
                         <select name="marital_status" value={formData.marital_status} onChange={handleInputChange}>
                           <option value="KAWIN">KAWIN</option>
                           <option value="BELUM KAWIN">BELUM KAWIN</option>
@@ -463,53 +516,53 @@ const EmployeeList: React.FC = () => {
                         </select>
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Masa Kerja Golongan (Tahun)</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Tahun)</label>
                         <input type="number" name="mkg_years" min="0" value={formData.mkg_years} onChange={handleInputChange} placeholder="0" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Masa Kerja Golongan (Bulan)</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Bulan)</label>
                         <input type="number" name="mkg_months" min="0" max="11" value={formData.mkg_months} onChange={handleInputChange} placeholder="0" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal MKG (TMT MKG)</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal MKG (TMT MKG)</label>
                         <DateInput name="tmt_mkg" value={formData.tmt_mkg} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                  <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                    <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                       3. Pangkat, Jabatan & Unit Kerja
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                    <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pangkat / Golongan</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Pangkat / Golongan</label>
                         <input type="text" name="rank" value={formData.rank} onChange={handleInputChange} placeholder="Contoh: III/a atau IX" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Jabatan</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jabatan</label>
                         <input type="text" name="position" value={formData.position} onChange={handleInputChange} placeholder="Contoh: Analis Kepegawaian" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Unit Kerja</label>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Unit Kerja</label>
                         <input type="text" name="unit_kerja" value={formData.unit_kerja} onChange={handleInputChange} placeholder="Contoh: Bidang Mutasi" />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                  <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                    <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                       4. Alamat
                     </h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Alamat Lengkap</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.2rem 0.6rem' }}>
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Alamat Lengkap</label>
                         <input type="text" name="address" value={formData.address} onChange={handleInputChange} placeholder="Jl. Contoh No. X..." />
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-4 mt-4" style={{ justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                  <div className="compact-modal-footer flex gap-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
                     <button type="button" className="btn-secondary" onClick={handleRequestClose}>Batal</button>
                     <button 
                       type="button" 

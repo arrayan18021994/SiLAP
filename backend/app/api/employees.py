@@ -24,12 +24,51 @@ def download_template():
         headers={"Content-Disposition": "attachment; filename=SiLAP_Template_Pegawai.xlsx"}
     )
 
+def get_rank_score(rank_str: str) -> int:
+    if not rank_str or rank_str == '-':
+        return 0
+    r = str(rank_str).strip().upper()
+    scores = {
+        "IV/E": 45, "IV/D": 44, "IV/C": 43, "IV/B": 42, "IV/A": 41,
+        "III/D": 34, "III/C": 33, "III/B": 32, "III/A": 31,
+        "II/D": 24, "II/C": 23, "II/B": 22, "II/A": 21,
+        "I/D": 14, "I/C": 13, "I/B": 12, "I/A": 11,
+    }
+    if r in scores:
+        return scores[r]
+    roman_scores = {
+        "XVII": 17, "XVI": 16, "XV": 15, "XIV": 14, "XIII": 13, "XII": 12, "XI": 11,
+        "X": 10, "IX": 9, "VIII": 8, "VII": 7, "VI": 6, "V": 5, "IV": 4, "III": 3, "II": 2, "I": 1
+    }
+    for k, v in roman_scores.items():
+        if k in r:
+            return v
+    return 0
+
+def get_asn_status_score(status_str: str) -> int:
+    if not status_str:
+        return 99
+    st = str(status_str).strip().upper()
+    if "PARUH" in st or "PART" in st:
+        return 3
+    if "PENUH" in st or "FULL" in st or "PPPK" in st:
+        return 2
+    if "PNS" in st:
+        return 1
+    return 4
+
 @router.get("/")
-def get_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Retrieve employees with pagination."""
-    employees = db.query(Employee).filter(Employee.is_active == True).offset(skip).limit(limit).all()
+def get_employees(skip: int = 0, limit: int = 200, db: Session = Depends(get_db)):
+    """Retrieve employees sorted hierarchically by ASN Status, Golongan, MKG, and NIP."""
+    from app.database.models.family import FamilyMember
+    employees = db.query(Employee).filter(Employee.is_active == True).all()
     result = []
     for emp in employees:
+        children_cnt = db.query(FamilyMember).filter(
+            FamilyMember.employee_id == emp.id,
+            FamilyMember.relationship_type.ilike("%ANAK%")
+        ).count()
+
         result.append({
             "id": emp.id,
             "nip": emp.nip,
@@ -41,20 +80,39 @@ def get_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
             "gender": emp.gender,
             "status": emp.asn_status if emp.asn_status else "PNS",
             "asn_status": emp.asn_status if emp.asn_status else "PNS",
-            "marital_status": emp.marital_status,
+            "marital_status": emp.marital_status or "BELUM KAWIN",
+            "mkg_years": getattr(emp, 'mkg_years', 0) or 0,
+            "mkg_months": getattr(emp, 'mkg_months', 0) or 0,
+            "tmt_mkg": str(emp.tmt_mkg) if getattr(emp, 'tmt_mkg', None) else None,
+            "children_count": children_cnt,
             "address": emp.address,
             "notes": emp.notes,
-            "rank": getattr(emp, 'rank', '-'),
-            "position": getattr(emp, 'position', '-'),
-            "opd": getattr(emp, 'opd', '-')
+            "rank": emp.rank if getattr(emp, 'rank', None) else '-',
+            "position": emp.position if getattr(emp, 'position', None) else '-',
+            "opd": emp.opd if getattr(emp, 'opd', None) else '-'
         })
-    return result
+
+    # Sort hierarchically: Status ASN (1,2,3) -> Rank (45..0 DESC) -> MKG Months (DESC) -> NIP (ASC)
+    result.sort(key=lambda x: (
+        get_asn_status_score(x.get("status") or x.get("asn_status")),
+        -get_rank_score(x.get("rank")),
+        -((int(x.get("mkg_years") or 0) * 12) + int(x.get("mkg_months") or 0)),
+        str(x.get("nip") or "")
+    ))
+    return result[skip:skip+limit]
 
 @router.get("/{employee_id}")
 def get_employee(employee_id: int, db: Session = Depends(get_db)):
+    from app.database.models.family import FamilyMember
     emp = db.query(Employee).filter(Employee.id == employee_id, Employee.is_active == True).first()
     if not emp:
          raise HTTPException(status_code=404, detail="Pegawai tidak ditemukan")
+
+    children_cnt = db.query(FamilyMember).filter(
+        FamilyMember.employee_id == emp.id,
+        FamilyMember.relationship_type.ilike("%ANAK%")
+    ).count()
+
     return {
         "id": emp.id,
         "nip": emp.nip,
@@ -66,7 +124,11 @@ def get_employee(employee_id: int, db: Session = Depends(get_db)):
         "gender": emp.gender,
         "status": emp.asn_status,
         "asn_status": emp.asn_status,
-        "marital_status": emp.marital_status,
+        "marital_status": emp.marital_status or "BELUM KAWIN",
+        "mkg_years": getattr(emp, 'mkg_years', 0) or 0,
+        "mkg_months": getattr(emp, 'mkg_months', 0) or 0,
+        "tmt_mkg": str(emp.tmt_mkg) if getattr(emp, 'tmt_mkg', None) else None,
+        "children_count": children_cnt,
         "address": emp.address,
         "notes": emp.notes,
         "rank": getattr(emp, 'rank', '-'),
@@ -107,71 +169,7 @@ def format_date_str(d):
     parsed = parse_date_str(d)
     return parsed.strftime("%d/%m/%Y") if parsed else str(d)
 
-@router.get("/")
-def get_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Retrieve employees with pagination."""
-    employees = db.query(Employee).filter(Employee.is_active == True).offset(skip).limit(limit).all()
-    result = []
-    for emp in employees:
-        result.append({
-            "id": emp.id,
-            "nip": emp.nip,
-            "name": getattr(emp, 'full_name', getattr(emp, 'name', '')),
-            "full_name": getattr(emp, 'full_name', getattr(emp, 'name', '')),
-            "nik": emp.nik,
-            "birth_place": emp.birth_place,
-            "birth_date": str(emp.birth_date) if emp.birth_date else None,
-            "birth_date_formatted": format_date_str(emp.birth_date),
-            "gender": emp.gender,
-            "status": emp.asn_status if emp.asn_status else "PNS",
-            "asn_status": emp.asn_status if emp.asn_status else "PNS",
-            "marital_status": emp.marital_status,
-            "address": emp.address,
-            "notes": emp.notes,
-            "tmt_cpns": str(emp.tmt_cpns) if emp.tmt_cpns else None,
-            "tmt_cpns_formatted": format_date_str(emp.tmt_cpns),
-            "mkg_years": emp.mkg_years if emp.mkg_years is not None else 0,
-            "mkg_months": emp.mkg_months if emp.mkg_months is not None else 0,
-            "tmt_mkg": str(emp.tmt_mkg) if emp.tmt_mkg else None,
-            "tmt_mkg_formatted": format_date_str(emp.tmt_mkg),
-            "rank": getattr(emp, 'rank', '-'),
-            "position": getattr(emp, 'position', '-'),
-            "opd": getattr(emp, 'opd', '-'),
-            "unit_kerja": getattr(emp, 'unit_kerja', getattr(emp, 'opd', '-'))
-        })
-    return result
 
-@router.get("/{employee_id}")
-def get_employee(employee_id: int, db: Session = Depends(get_db)):
-    emp = db.query(Employee).filter(Employee.id == employee_id, Employee.is_active == True).first()
-    if not emp:
-         raise HTTPException(status_code=404, detail="Pegawai tidak ditemukan")
-    return {
-        "id": emp.id,
-        "nip": emp.nip,
-        "name": getattr(emp, 'full_name', getattr(emp, 'name', '')),
-        "full_name": getattr(emp, 'full_name', getattr(emp, 'name', '')),
-        "nik": emp.nik,
-        "birth_place": emp.birth_place,
-        "birth_date": str(emp.birth_date) if emp.birth_date else None,
-        "birth_date_formatted": format_date_str(emp.birth_date),
-        "gender": emp.gender,
-        "status": emp.asn_status,
-        "asn_status": emp.asn_status,
-        "marital_status": emp.marital_status,
-        "address": emp.address,
-        "notes": emp.notes,
-        "tmt_cpns": str(emp.tmt_cpns) if emp.tmt_cpns else None,
-        "tmt_cpns_formatted": format_date_str(emp.tmt_cpns),
-        "mkg_years": emp.mkg_years if emp.mkg_years is not None else 0,
-        "mkg_months": emp.mkg_months if emp.mkg_months is not None else 0,
-        "tmt_mkg": str(emp.tmt_mkg) if emp.tmt_mkg else None,
-        "tmt_mkg_formatted": format_date_str(emp.tmt_mkg),
-        "rank": getattr(emp, 'rank', '-'),
-        "position": getattr(emp, 'position', '-'),
-        "opd": getattr(emp, 'opd', '-'),
-        "unit_kerja": getattr(emp, 'unit_kerja', getattr(emp, 'opd', '-'))
-    }
 
 @router.post("/")
 def create_employee(data: dict, db: Session = Depends(get_db)):

@@ -62,6 +62,66 @@ class ReminderEngine:
                         due_date=snap.next_kgb_date,
                         priority=priority
                     )
+
+    @staticmethod
+    def refresh_child_age_reminders(db: Session):
+        """
+        Check all children for age >= 21.
+        If age >= 21 and no valid school_letter_number/file, mark child status as INACTIVE/PERLU_SURAT_KULIAH
+        and generate a reminder record.
+        If valid school letter exists, mark child status as ACTIVE and resolve pending reminders.
+        """
+        from app.database.models.family import FamilyMember
+        today = datetime.date.today()
+        all_family = db.query(FamilyMember).filter(FamilyMember.birth_date.isnot(None)).all()
+
+        for member in all_family:
+            rel = (member.relationship_type or "").upper()
+            if "ANAK" not in rel and "CHILD" not in rel:
+                continue
+
+            bdate = member.birth_date
+            age = today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day))
+
+            has_valid_letter = False
+            if (member.school_letter_number and str(member.school_letter_number).strip()) or (member.document_file_name and str(member.document_file_name).strip()):
+                if not member.school_letter_valid_until or member.school_letter_valid_until >= today:
+                    has_valid_letter = True
+
+            if age >= 21:
+                if not has_valid_letter:
+                    member.status = "INACTIVE"
+                    member.child_status = "PERLU_SURAT_KULIAH"
+                    title = f"Pengingat Tunjangan Anak: {member.name} Berusia {age} Tahun"
+                    description = f"Anak {member.name} telah berusia {age} tahun. Diperlukan unggah Surat Keterangan Aktif Kuliah pada data pegawai untuk mengaktifkan kembali tunjangan keluarga."
+                    
+                    ReminderEngine.generate_reminder(
+                        db=db,
+                        employee_id=member.employee_id,
+                        reminder_type="ANAK_21_TAHUN",
+                        reference_type="family_members",
+                        reference_id=member.id,
+                        title=title,
+                        description=description,
+                        due_date=today,
+                        priority="HIGH"
+                    )
+                else:
+                    member.status = "ACTIVE"
+                    member.child_status = "AKTIF_KULIAH"
+                    reminders = db.query(ReminderRecord).filter(
+                        ReminderRecord.reference_type == "family_members",
+                        ReminderRecord.reference_id == member.id,
+                        ReminderRecord.reminder_type == "ANAK_21_TAHUN",
+                        ReminderRecord.status != "COMPLETED"
+                    ).all()
+                    for r in reminders:
+                        r.status = "COMPLETED"
+            else:
+                member.status = "ACTIVE"
+                member.child_status = "AKTIF"
+
+        db.commit()
     
     @staticmethod
     def dismiss(db: Session, reminder_id: int):

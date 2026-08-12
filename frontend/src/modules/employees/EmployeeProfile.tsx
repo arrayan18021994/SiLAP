@@ -247,7 +247,7 @@ const EmployeeProfile: React.FC = () => {
           )}
 
           {activeTab === 'masa-kerja' && <ServicePeriodTab employeeId={id} />}
-          {activeTab === 'keluarga' && <EmployeeFamilyTab />}
+          {activeTab === 'keluarga' && <EmployeeFamilyTab employeeId={id} />}
           {activeTab === 'peristiwa' && <LifeEventsTimeline />}
           {activeTab === 'cuti' && <EmployeeLeaveTab />}
           {activeTab === 'kgb' && <EmployeeKGBTab />}
@@ -262,65 +262,65 @@ const EmployeeProfile: React.FC = () => {
           background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center',
           justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(2px)'
         }}>
-          <div className="card" style={{
-            width: '780px', maxWidth: '92vw', maxHeight: '90vh', overflowY: 'auto',
-            padding: '1.75rem', background: '#ffffff', borderRadius: '12px',
+          <div className="card compact-modal-card" style={{
+            width: '920px', maxWidth: '96vw', maxHeight: '96vh', overflowY: 'auto',
+            padding: '1rem 1.25rem', background: '#ffffff', borderRadius: '10px',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)' }}>Edit Profil Pegawai</h3>
+            <div className="compact-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Edit Profil Pegawai</h3>
               <button
                 type="button"
                 onClick={handleRequestClose}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
+                style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748b' }}
               >
                 &times;
               </button>
             </div>
 
             <form onSubmit={handleFormSubmit}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+              <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                   1. Data Utama Pegawai
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIP *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIP *</label>
                     <input type="text" name="nip" value={formData.nip || ''} onChange={handleInputChange} required />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Nama & Gelar *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nama & Gelar *</label>
                     <input type="text" name="full_name" value={formData.full_name || formData.name || ''} onChange={handleInputChange} required />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIK</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIK</label>
                     <input type="text" name="nik" value={formData.nik || ''} onChange={handleInputChange} />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Jenis Kelamin *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jenis Kelamin *</label>
                     <select name="gender" value={formData.gender || 'L'} onChange={handleInputChange}>
                       <option value="L">Laki-laki (L)</option>
                       <option value="P">Perempuan (P)</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tempat Lahir *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tempat Lahir *</label>
                     <input type="text" name="birth_place" value={formData.birth_place || ''} onChange={handleInputChange} />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal Lahir *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Lahir *</label>
                     <DateInput name="birth_date" value={formData.birth_date || formData.birth_date_formatted} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                   </div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+              <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                   2. Status Kepegawaian & Masa Kerja Golongan
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Status ASN *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Status ASN *</label>
                     <select name="asn_status" value={formData.asn_status || formData.status || 'PNS'} onChange={handleInputChange}>
                       <option value="PNS">PNS</option>
                       <option value="PPPK Penuh Waktu">PPPK Penuh Waktu</option>
@@ -328,11 +328,11 @@ const EmployeeProfile: React.FC = () => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>TMT ASN / CPNS</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>TMT ASN / CPNS</label>
                     <DateInput name="tmt_cpns" value={formData.tmt_cpns || formData.tmt_cpns_formatted} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Status Perkawinan *</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Status Perkawinan *</label>
                     <select name="marital_status" value={formData.marital_status || 'KAWIN'} onChange={handleInputChange}>
                       <option value="KAWIN">KAWIN</option>
                       <option value="BELUM KAWIN">BELUM KAWIN</option>
@@ -341,49 +341,53 @@ const EmployeeProfile: React.FC = () => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Masa Kerja Golongan (Tahun)</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Tahun)</label>
                     <input type="number" name="mkg_years" min="0" value={formData.mkg_years ?? 0} onChange={handleInputChange} />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Masa Kerja Golongan (Bulan)</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Bulan)</label>
                     <input type="number" name="mkg_months" min="0" max="11" value={formData.mkg_months ?? 0} onChange={handleInputChange} />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal MKG (TMT MKG)</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal MKG (TMT MKG)</label>
                     <DateInput name="tmt_mkg" value={formData.tmt_mkg || formData.tmt_mkg_formatted} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
                   </div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+              <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                   3. Pangkat & Jabatan
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pangkat / Golongan</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Pangkat / Golongan</label>
                     <input type="text" name="rank" value={formData.rank || ''} onChange={handleInputChange} />
                   </div>
                   <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Jabatan</label>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jabatan</label>
                     <input type="text" name="position" value={formData.position || ''} onChange={handleInputChange} />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Unit Kerja</label>
+                    <input type="text" name="opd" value={formData.opd || ''} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', marginBottom: '0.75rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+              <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
+                <h4 className="compact-section-title" style={{ fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.2rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.4rem', fontWeight: 700 }}>
                   4. Alamat
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Alamat Lengkap</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.2rem 0.6rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Alamat Lengkap</label>
                     <input type="text" name="address" value={formData.address || ''} onChange={handleInputChange} />
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-4" style={{ justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+              <div className="compact-modal-footer flex gap-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
                 <button type="button" className="btn-secondary" onClick={handleRequestClose}>Batal</button>
                 <button type="submit" className="btn-primary">Simpan Perubahan</button>
               </div>

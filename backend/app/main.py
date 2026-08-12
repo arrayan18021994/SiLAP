@@ -26,6 +26,38 @@ def ensure_sqlite_columns():
                     cursor.execute("ALTER TABLE employees ADD COLUMN mkg_months INTEGER DEFAULT 0")
                 if "tmt_mkg" not in cols:
                     cursor.execute("ALTER TABLE employees ADD COLUMN tmt_mkg DATE")
+                if "rank" not in cols:
+                    cursor.execute("ALTER TABLE employees ADD COLUMN rank VARCHAR")
+                if "position" not in cols:
+                    cursor.execute("ALTER TABLE employees ADD COLUMN position VARCHAR")
+                if "opd" not in cols:
+                    cursor.execute("ALTER TABLE employees ADD COLUMN opd VARCHAR")
+                if "unit_kerja" not in cols:
+                    cursor.execute("ALTER TABLE employees ADD COLUMN unit_kerja VARCHAR")
+                conn.commit()
+
+            cursor.execute("PRAGMA table_info(family_members)")
+            fcols = [row[1] for row in cursor.fetchall()]
+            if fcols:
+                for col_name, col_type in [
+                    ("nik", "VARCHAR"),
+                    ("gender", "VARCHAR"),
+                    ("birth_place", "VARCHAR"),
+                    ("birth_date", "DATE"),
+                    ("marriage_date", "DATE"),
+                    ("job", "VARCHAR"),
+                    ("child_status", "VARCHAR"),
+                    ("education", "VARCHAR"),
+                    ("document_number", "VARCHAR"),
+                    ("document_date", "DATE"),
+                    ("school_letter_number", "VARCHAR"),
+                    ("school_letter_date", "DATE"),
+                    ("school_letter_valid_until", "DATE"),
+                    ("document_file_name", "VARCHAR"),
+                    ("notes", "VARCHAR")
+                ]:
+                    if col_name not in fcols:
+                        cursor.execute(f"ALTER TABLE family_members ADD COLUMN {col_name} {col_type}")
                 conn.commit()
             conn.close()
     except Exception as e:

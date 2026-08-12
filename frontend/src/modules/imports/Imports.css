@@ -138,13 +138,13 @@
 
 .summary-boxes {
   display: flex;
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
 .summary-box {
   flex: 1;
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: white;
   text-align: center;
@@ -161,22 +161,65 @@
 }
 
 .summary-box h4 {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: #64748b;
-  margin-bottom: 0.25rem;
+  margin-bottom: 2px;
+  font-weight: 600;
 }
 
 .summary-box.success h4 { color: #047857; }
 .summary-box.danger h4 { color: #b91c1c; }
 
 .summary-box .val {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #0f172a;
+  line-height: 1.2;
 }
 
 .summary-box.success .val { color: #047857; }
 .summary-box.danger .val { color: #b91c1c; }
+
+.btn-action-icon {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action-icon:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+.btn-action-icon.edit {
+  color: #2563eb;
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.btn-action-icon.edit:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.btn-action-icon.delete {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.btn-action-icon.delete:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
 
 .warning-text {
   color: #64748b;
