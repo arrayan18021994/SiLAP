@@ -199,7 +199,7 @@ const ImportWizard: React.FC = () => {
   return (
     <div className="import-wizard-container">
       <div className="page-header" style={{ marginBottom: '1rem' }}>
-        <h2>Import Data Pegawai Massal</h2>
+        <h2>Impor Data Pegawai Massal</h2>
         <button className="btn-secondary" onClick={() => window.history.back()}>Kembali</button>
       </div>
 
@@ -208,12 +208,12 @@ const ImportWizard: React.FC = () => {
         <div className="steps-container">
           <div className="step-col">
             <div className="step-header">
-              <h3>Langkah 1: Download & Isi Template</h3>
+              <h3>Langkah 1: Unduh & Isi Template</h3>
               <p className="text-muted">Gunakan template resmi untuk memastikan struktur data terbaca sistem.</p>
             </div>
             <div className="step-action-box" onClick={handleDownloadTemplate}>
               <span className="step-icon">📥</span>
-              <span className="action-text">Download SiLAP_Template_Pegawai.xlsx</span>
+              <span className="action-text">Unduh SiLAP_Template_Pegawai.xlsx</span>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ const ImportWizard: React.FC = () => {
 
           <div className="step-col">
             <div className="step-header">
-              <h3>Langkah 2: Upload Excel</h3>
+              <h3>Langkah 2: Unggah Excel</h3>
               <p className="text-muted">Unggah file Excel yang telah diisi sesuai format template.</p>
             </div>
             <div className="upload-box">
@@ -238,15 +238,13 @@ const ImportWizard: React.FC = () => {
         {/* Validation Section (Appears when file is uploaded & parsed) */}
         {previewData && (
           <div className="validation-section mt-4">
-            <hr className="divider mb-3" />
-            <div className="d-flex justify-content-between align-items-center mb-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Daftar Data untuk Divalidasi</h3>
-              <button className="btn-secondary btn-sm" onClick={handleReset} style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}>Reset / Upload File Lain</button>
+            <div className="validation-header">
+              <h3>Pratinjau & Validasi Data Pegawai</h3>
             </div>
             
             {/* Compact KPI Summary Cards */}
             <div className="summary-boxes mb-3">
-              <div className="summary-box">
+              <div className="summary-box total">
                 <h4>Total Baris</h4>
                 <div className="val">{previewData.total_rows}</div>
               </div>
@@ -261,23 +259,23 @@ const ImportWizard: React.FC = () => {
             </div>
 
             <p className="warning-text mb-3" style={{ fontSize: '0.83rem' }}>
-              Silakan periksa data di bawah ini. Anda dapat mengedit data per baris langsung dengan menekan tombol <strong>Edit (✏️)</strong>. Hanya data berstatus <strong>VALID</strong> yang akan dimasukkan ke database saat Anda klik "Import Data Valid".
+              Silakan periksa data di bawah ini. Anda dapat mengedit data per baris langsung dengan menekan tombol <strong>Edit (✏️)</strong>. Hanya data berstatus <strong>VALID</strong> yang akan dimasukkan ke database saat Anda klik "Impor Data Valid".
             </p>
 
             <div className="table-responsive">
               <table className="data-table" style={{ fontSize: '0.85rem' }}>
                 <thead>
                   <tr>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>BARIS</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>NIP</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>NAMA</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>STATUS ASN</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>GOLONGAN</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>MKG</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>STATUS PERKAWINAN</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>JUMLAH ANAK</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>STATUS VALIDASI</th>
-                    <th style={{ padding: '0.5rem 0.75rem' }}>KETERANGAN</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>BARIS</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>NIP</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>NAMA</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>STATUS ASN</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>GOLONGAN</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>MKG</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>STATUS PERKAWINAN</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>JUMLAH ANAK</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>STATUS VALIDASI</th>
+                    <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>KETERANGAN</th>
                     <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>AKSI</th>
                   </tr>
                 </thead>
@@ -288,19 +286,19 @@ const ImportWizard: React.FC = () => {
                     const childrenCnt = r.children_count !== undefined ? r.children_count : (r.children ? r.children.length : 0);
                     return (
                       <tr key={idx} className={r.import_status === 'ERROR' ? 'row-error' : ''}>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>{r.row}</td>
-                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>{r.nip}</td>
-                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600 }}>{r.name || r.full_name || '-'}</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{r.row}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 400, textAlign: 'center' }}>{r.nip}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 400, textAlign: 'left' }}>{r.name || r.full_name || '-'}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                           <span className={`badge ${statusAsn.toLowerCase().includes('pns') ? 'badge-normal' : 'badge-attention'}`}>
                             {statusAsn}
                           </span>
                         </td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>{rankVal}</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>{r.mkg_years !== undefined ? `${r.mkg_years} Thn ${r.mkg_months || 0} Bln` : '-'}</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>{r.marital_status || 'KAWIN'}</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>{childrenCnt} Anak</td>
-                        <td style={{ padding: '0.5rem 0.75rem' }}>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{rankVal}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{r.mkg_years !== undefined ? `${r.mkg_years} Thn ${r.mkg_months || 0} Bln` : '-'}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{r.marital_status || 'KAWIN'}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{childrenCnt} Anak</td>
+                        <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
                           <span className={`badge ${r.import_status === 'VALID' ? 'badge-normal' : 'badge-overdue'}`}>
                             {r.import_status}
                           </span>
@@ -336,9 +334,9 @@ const ImportWizard: React.FC = () => {
             </div>
 
             <div className="button-group mt-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-              <button className="btn-secondary" onClick={handleReset}>Batal / Upload Ulang</button>
+              <button className="btn-secondary" onClick={handleReset}>Batal / Unggah Ulang</button>
               <button className="btn-primary" onClick={handleCommit} disabled={loading || previewData.valid_rows === 0}>
-                {loading ? "Menyimpan..." : `Import ${previewData.valid_rows} Data Valid`}
+                {loading ? "Menyimpan..." : `Impor ${previewData.valid_rows} Data Valid`}
               </button>
             </div>
           </div>

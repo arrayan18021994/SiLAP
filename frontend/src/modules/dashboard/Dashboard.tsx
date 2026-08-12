@@ -574,12 +574,12 @@ const Dashboard: React.FC = () => {
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{realTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')} WIB</span>
             </div>
 
-            <span className="topbar-icon" title="Toggle Theme" onClick={toggleTheme}>
+            <span className="topbar-icon" title="Ganti Tema" onClick={toggleTheme}>
               {theme === 'light' ? '☀️' : '🌙'}
             </span>
 
             <div className="notification-container">
-              <span className={`topbar-icon ${unreadNotifications > 0 ? 'ringing' : ''}`} style={{ position: 'relative' }} title="Notifications" onClick={() => {
+              <span className={`topbar-icon ${unreadNotifications > 0 ? 'ringing' : ''}`} style={{ position: 'relative' }} title="Notifikasi" onClick={() => {
                 setShowNotifications(!showNotifications);
                 if (!showNotifications) setUnreadNotifications(0);
               }}>

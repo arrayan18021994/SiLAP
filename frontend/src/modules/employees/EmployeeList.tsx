@@ -316,7 +316,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ searchQuery = '' }) => {
       <div className="page-header">
         <h2>Data Pegawai</h2>
         <div className="header-actions">
-          <Link to="/dashboard/employees/import" className="btn-secondary">Import Excel</Link>
+          <Link to="/dashboard/employees/import" className="btn-secondary">Impor Excel</Link>
           <button className="btn-primary" onClick={() => { resetModalState(); setShowModal(true); }}>+ Tambah Pegawai Manual</button>
         </div>
       </div>
@@ -402,7 +402,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ searchQuery = '' }) => {
             className="btn-secondary"
             style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', cursor: currentPage <= 1 ? 'not-allowed' : 'pointer', opacity: currentPage <= 1 ? 0.5 : 1 }}
           >
-            &lt; Prev
+            &lt; Sebelumnya
           </button>
           <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '0 0.5rem', color: 'var(--text-main)' }}>
             Halaman {currentPage} dari {totalPages}
@@ -413,7 +413,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ searchQuery = '' }) => {
             className="btn-secondary"
             style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer', opacity: currentPage >= totalPages ? 0.5 : 1 }}
           >
-            Next &gt;
+            Selanjutnya &gt;
           </button>
         </div>
       </div>
