@@ -655,13 +655,13 @@ const Dashboard: React.FC = () => {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<DashboardHome currentDate={currentDate} searchQuery={searchQuery} />} />
-            <Route path="/employees" element={<EmployeeList />} />
+            <Route path="/employees" element={<EmployeeList searchQuery={searchQuery} />} />
             <Route path="/employees/import" element={<ImportWizard />} />
             <Route path="/employees/:id" element={<EmployeeProfile />} />
-            <Route path="/leave" element={<LeaveDashboard />} />
-            <Route path="/gaji-berkala" element={<PeriodicSalaryDashboard />} />
-            <Route path="/kepangkatan" element={<PromotionDashboard />} />
-            <Route path="/tunjangan" element={<FamilyAllowanceDashboard />} />
+            <Route path="/leave" element={<LeaveDashboard searchQuery={searchQuery} />} />
+            <Route path="/gaji-berkala" element={<PeriodicSalaryDashboard searchQuery={searchQuery} />} />
+            <Route path="/kepangkatan" element={<PromotionDashboard searchQuery={searchQuery} />} />
+            <Route path="/tunjangan" element={<FamilyAllowanceDashboard searchQuery={searchQuery} />} />
             <Route path="/regulations" element={<RegulationDashboard />} />
             <Route path="/settings" element={<SystemSettings />} />
             <Route path="*" element={<div><h2 style={{ color: 'var(--text-main)', marginTop: '2rem' }}>Modul dalam pengembangan</h2><p style={{ color: 'var(--text-muted)' }}>Halaman ini belum tersedia.</p></div>} />

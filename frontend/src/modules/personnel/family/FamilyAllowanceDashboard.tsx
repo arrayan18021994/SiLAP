@@ -5,7 +5,11 @@ import '../../leave/Leave.css';
 
 const MONTHS = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-const FamilyAllowanceDashboard: React.FC = () => {
+interface FamilyAllowanceDashboardProps {
+  searchQuery?: string;
+}
+
+const FamilyAllowanceDashboard: React.FC<FamilyAllowanceDashboardProps> = ({ searchQuery = '' }) => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -13,37 +17,45 @@ const FamilyAllowanceDashboard: React.FC = () => {
     {
       id: 1,
       empId: '1',
-      nama: 'Ahmad Budi, S.E.',
-      nip: '198501012010011001',
-      perubahan: 'Anak (Rizky Ramadhan) Berusia 21 Thn',
-      jenis: 'Perlu Surat Aktif Kuliah',
+      nama: 'Dr. H. Ahmad Supriyadi, M.Si.',
+      nip: '197203151996031001',
+      perubahan: 'Anak (Budi Santoso) Berusia 23 Thn',
+      jenis: 'Surat Aktif Kuliah Disetujui',
       tanggal: `10/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`,
+      status: 'AKTIF_KULIAH',
+      statusLabel: '✓ AKTIF (KULIAH)'
+    },
+    {
+      id: 2,
+      empId: '3',
+      nama: 'Dra. Ratna Sarumpaet, M.Pd.',
+      nip: '198207192006042005',
+      perubahan: 'Anak (Rian Triyono) Berusia 21 Thn',
+      jenis: 'Perlu Surat Aktif Kuliah',
+      tanggal: `15/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`,
       status: 'PERLU_SURAT_KULIAH',
       statusLabel: 'PERLU SURAT KULIAH'
     },
     {
-      id: 2,
-      empId: '2',
-      nama: 'Fahri Hamzah, S.H.',
-      nip: '198007072008071007',
-      perubahan: 'Kelahiran Anak Ke-2',
-      jenis: 'Penambahan Tunjangan',
-      tanggal: `15/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`,
-      status: 'NEEDS_REVIEW',
-      statusLabel: 'PERLU REVIEW'
-    },
-    {
       id: 3,
-      empId: '3',
-      nama: 'Gita Wirjawan, M.M.',
-      nip: '197508082001081008',
-      perubahan: 'Anak Ke-1 Berusia 21 Thn (Surat Aktif Kuliah Disetujui)',
-      jenis: 'Perpanjangan Tunjangan Anak',
+      empId: '5',
+      nama: 'Hendrik Wijaya, S.Kom., M.T.',
+      nip: '198811042014021003',
+      perubahan: 'Kelahiran Anak Ke-1',
+      jenis: 'Penambahan Tunjangan Anak',
       tanggal: `22/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`,
-      status: 'AKTIF_KULIAH',
-      statusLabel: 'AKTIF (KULIAH)'
+      status: 'NEEDS_REVIEW',
+      statusLabel: 'NEEDS_REVIEW'
     }
   ];
+
+  const searchLower = searchQuery.trim().toLowerCase();
+  const filteredRecords = allowanceRecords.filter(item =>
+    !searchLower ||
+    item.nama.toLowerCase().includes(searchLower) ||
+    item.nip.toLowerCase().includes(searchLower) ||
+    item.perubahan.toLowerCase().includes(searchLower)
+  );
 
   return (
     <div className="leave-dashboard">
@@ -79,51 +91,58 @@ const FamilyAllowanceDashboard: React.FC = () => {
         <table className="table" style={{ width: '100%', fontSize: '13px' }}>
           <thead>
             <tr style={{ color: 'var(--text-muted)' }}>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>No</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Nama Pegawai</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>NIP</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Perubahan Keluarga</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Jenis Perubahan</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Tanggal Perubahan</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Status</th>
-              <th style={{ textAlign: 'center', padding: '1rem' }}>Aksi</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NO</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NAMA PEGAWAI</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NIP</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>PERUBAHAN KELUARGA</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>JENIS PERUBAHAN</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>TANGGAL PERUBAHAN</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>STATUS</th>
+              <th style={{ textAlign: 'center', padding: '0.75rem 1rem' }}>AKSI</th>
             </tr>
           </thead>
           <tbody>
-            {allowanceRecords.map((item, index) => (
+            {filteredRecords.map((item, index) => (
               <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                <td style={{ padding: '1rem' }}>{index + 1}</td>
-                <td style={{ padding: '1rem', fontWeight: 'bold' }}>{item.nama}</td>
-                <td style={{ padding: '1rem' }}>{item.nip}</td>
-                <td style={{ padding: '1rem' }}>{item.perubahan}</td>
-                <td style={{ padding: '1rem' }}>{item.jenis}</td>
-                <td style={{ padding: '1rem' }}>{item.tanggal}</td>
-                <td style={{ padding: '1rem' }}>
+                <td style={{ padding: '0.75rem 1rem' }}>{index + 1}</td>
+                <td style={{ padding: '0.75rem 1rem', fontWeight: 400 }}>{item.nama}</td>
+                <td style={{ padding: '0.75rem 1rem', fontWeight: 400 }}>{item.nip}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.perubahan}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.jenis}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.tanggal}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>
                   {item.status === 'PERLU_SURAT_KULIAH' ? (
-                    <span style={{ padding: '4px 8px', background: '#fee2e2', color: '#b91c1c', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                    <span style={{ padding: '4px 8px', background: '#fee2e2', color: '#b91c1c', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
                       ⚠️ PERLU SURAT KULIAH
                     </span>
                   ) : item.status === 'AKTIF_KULIAH' ? (
-                    <span style={{ padding: '4px 8px', background: '#dcfce7', color: '#15803d', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                    <span style={{ padding: '4px 8px', background: '#dcfce7', color: '#15803d', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
                       ✓ AKTIF (KULIAH)
                     </span>
                   ) : (
-                    <span style={{ padding: '4px 8px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                    <span style={{ padding: '4px 8px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
                       NEEDS_REVIEW
                     </span>
                   )}
                 </td>
-                <td style={{ padding: '1rem', textAlign: 'center' }}>
+                <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                   <button
                     className="btn-primary"
                     onClick={() => navigate(`/dashboard/employees/${item.empId}`)}
-                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600 }}
+                    style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 500 }}
                   >
                     {item.status === 'PERLU_SURAT_KULIAH' ? 'Upload Surat Kuliah' : 'Detail Pegawai'}
                   </button>
                 </td>
               </tr>
             ))}
+            {filteredRecords.length === 0 && (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                  Tidak ada data tunjangan yang sesuai pencarian.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -4,7 +4,11 @@ import './Leave.css';
 
 const MONTHS = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-const LeaveDashboard: React.FC = () => {
+interface LeaveDashboardProps {
+  searchQuery?: string;
+}
+
+const LeaveDashboard: React.FC<LeaveDashboardProps> = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   return (

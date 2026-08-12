@@ -4,8 +4,23 @@ import '../../leave/Leave.css';
 
 const MONTHS = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-const PeriodicSalaryDashboard: React.FC = () => {
+interface PeriodicSalaryDashboardProps {
+  searchQuery?: string;
+}
+
+const PeriodicSalaryDashboard: React.FC<PeriodicSalaryDashboardProps> = ({ searchQuery = '' }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  const salaryRecords = [
+    { id: 1, nama: 'Dr. H. Ahmad Supriyadi, M.Si.', nip: '197203151996031001', rank: 'Pembina Utama Muda (IV/d)', kgbTerakhir: '01/04/2022', tmtBerikutnya: `01/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`, status: 'READY' },
+    { id: 2, nama: 'Drs. M. Ridwan Kusuma, M.Si.', nip: '197805102001032002', rank: 'Pembina Tingkat I (IV/b)', kgbTerakhir: '01/04/2023', tmtBerikutnya: `01/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`, status: 'NEEDS_REVIEW' },
+    { id: 3, nama: 'Dra. Ratna Sarumpaet, M.Pd.', nip: '198207192006042005', rank: 'Pembina (IV/a)', kgbTerakhir: '15/04/2023', tmtBerikutnya: `15/${String(currentDate.getMonth()+1).padStart(2, '0')}/${currentDate.getFullYear()}`, status: 'PROPOSAL_CREATED' }
+  ];
+
+  const searchLower = searchQuery.trim().toLowerCase();
+  const filtered = salaryRecords.filter(r =>
+    !searchLower || r.nama.toLowerCase().includes(searchLower) || r.nip.toLowerCase().includes(searchLower)
+  );
 
   return (
     <div className="leave-dashboard">
@@ -22,47 +37,42 @@ const PeriodicSalaryDashboard: React.FC = () => {
         <table className="table" style={{ width: '100%', fontSize: '13px' }}>
           <thead>
             <tr style={{ color: 'var(--text-muted)' }}>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>No</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Nama</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>NIP</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Pangkat/Golongan</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>KGB Terakhir</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>TMT KGB Berikutnya</th>
-              <th style={{ textAlign: 'left', padding: '1rem' }}>Status</th>
-              <th style={{ textAlign: 'center', padding: '1rem' }}>Aksi</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NO</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NAMA PEGAWAI</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>NIP</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>PANGKAT / GOLONGAN</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>KGB TERAKHIR</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>TMT KGB BERIKUTNYA</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem 1rem' }}>STATUS</th>
+              <th style={{ textAlign: 'center', padding: '0.75rem 1rem' }}>AKSI</th>
             </tr>
           </thead>
           <tbody>
-            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <td style={{ padding: '1rem' }}>1</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Ahmad Budi, S.E.</td>
-              <td style={{ padding: '1rem' }}>198501012010011001</td>
-              <td style={{ padding: '1rem' }}>Penata (III/c)</td>
-              <td style={{ padding: '1rem' }}>01/08/2024</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>01/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
-              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>READY</span></td>
-              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <td style={{ padding: '1rem' }}>2</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Budi Santoso, S.Sos.</td>
-              <td style={{ padding: '1rem' }}>197902022005022002</td>
-              <td style={{ padding: '1rem' }}>Pembina (IV/a)</td>
-              <td style={{ padding: '1rem' }}>01/08/2024</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>01/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
-              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>NEEDS_REVIEW</span></td>
-              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <td style={{ padding: '1rem' }}>3</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Citra Lestari, S.E.</td>
-              <td style={{ padding: '1rem' }}>199203032015032003</td>
-              <td style={{ padding: '1rem' }}>Penata Muda (III/a)</td>
-              <td style={{ padding: '1rem' }}>15/08/2024</td>
-              <td style={{ padding: '1rem', fontWeight: 'bold' }}>15/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
-              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>PROPOSAL_CREATED</span></td>
-              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
-            </tr>
+            {filtered.map((item, index) => (
+              <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                <td style={{ padding: '0.75rem 1rem' }}>{index + 1}</td>
+                <td style={{ padding: '0.75rem 1rem', fontWeight: 400 }}>{item.nama}</td>
+                <td style={{ padding: '0.75rem 1rem', fontWeight: 400 }}>{item.nip}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.rank}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.kgbTerakhir}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>{item.tmtBerikutnya}</td>
+                <td style={{ padding: '0.75rem 1rem' }}>
+                  <span style={{ padding: '4px 8px', background: item.status === 'READY' ? 'rgba(16, 185, 129, 0.2)' : item.status === 'NEEDS_REVIEW' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: item.status === 'READY' ? '#10b981' : item.status === 'NEEDS_REVIEW' ? '#f59e0b' : '#3b82f6', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                    {item.status}
+                  </span>
+                </td>
+                <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                  <button className="btn-text" style={{ fontWeight: 500 }}>Detail</button>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                  Tidak ada data gaji berkala yang sesuai pencarian.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

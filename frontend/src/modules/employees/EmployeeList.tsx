@@ -47,16 +47,32 @@ const initialChildItem = {
   education: ''
 };
 
-const EmployeeList: React.FC = () => {
+interface EmployeeListProps {
+  searchQuery?: string;
+}
+
+const EmployeeList: React.FC<EmployeeListProps> = ({ searchQuery = '' }) => {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [employees, setEmployees] = useState<any[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState(initialFormState);
-  const [spouseData, setSpouseData] = useState(initialSpouseState);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
+
+  // Multi-Step Modal States
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [formData, setFormData] = useState<any>(initialFormState);
+  const [spouseData, setSpouseData] = useState<any>(initialSpouseState);
   const [childrenData, setChildrenData] = useState<any[]>([]);
+
+  // Confirmation Modals State
+  const [showSaveConfirm, setShowSaveConfirm] = useState<boolean>(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
+
+  const highlightId = searchParams.get('highlight');
 
   useEffect(() => {
     const s = searchParams.get('search');
@@ -64,10 +80,14 @@ const EmployeeList: React.FC = () => {
     if (s !== null) setSearchTerm(s);
     if (st !== null) setStatusFilter(st);
   }, [searchParams]);
-  
-  // Confirmation modals state
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   const fetchEmployees = async () => {
     try {
@@ -80,10 +100,6 @@ const EmployeeList: React.FC = () => {
       console.error(e);
     }
   };
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
 
   const resetModalState = () => {
     setFormData(initialFormState);
@@ -99,9 +115,9 @@ const EmployeeList: React.FC = () => {
     return isEmpDirty || isSpouseDirty || isChildDirty;
   };
 
-  const handleInputChange = (e: { target: { name: string; value: string } } | React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: { target: { name: string; value: string } }) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: any) => ({
       ...prev,
       [name]: value,
       ...(name === 'name' ? { full_name: value } : {}),
@@ -109,21 +125,21 @@ const EmployeeList: React.FC = () => {
     }));
   };
 
-  const handleSpouseChange = (e: { target: { name: string; value: string } } | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleSpouseChange = (e: { target: { name: string; value: string } }) => {
     const { name, value } = e.target;
-    setSpouseData(prev => ({ ...prev, [name]: value }));
+    setSpouseData((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleAddChild = () => {
-    setChildrenData(prev => [...prev, { ...initialChildItem }]);
+    setChildrenData((prev: any[]) => [...prev, { ...initialChildItem }]);
   };
 
   const handleRemoveChild = (index: number) => {
-    setChildrenData(prev => prev.filter((_, i) => i !== index));
+    setChildrenData((prev: any[]) => prev.filter((_, i) => i !== index));
   };
 
   const handleChildChange = (index: number, name: string, value: string) => {
-    setChildrenData(prev => prev.map((item, i) => i === index ? { ...item, [name]: value } : item));
+    setChildrenData((prev: any[]) => prev.map((item, i) => i === index ? { ...item, [name]: value } : item));
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -140,7 +156,6 @@ const EmployeeList: React.FC = () => {
         asn_status: formData.status || formData.asn_status
       };
       
-      // 1. Save Employee Data
       const res = await fetch('/api/v1/employees/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +171,6 @@ const EmployeeList: React.FC = () => {
       const createdEmp = await res.json();
       const employeeId = createdEmp.id;
 
-      // 2. Save Spouse Data if filled
       if (spouseData.name && spouseData.name.trim() !== '') {
         try {
           await fetch(`/api/v1/family/${employeeId}`, {
@@ -177,7 +191,6 @@ const EmployeeList: React.FC = () => {
         }
       }
 
-      // 3. Save Children Data if added
       for (const child of childrenData) {
         if (child.name && child.name.trim() !== '') {
           try {
@@ -255,15 +268,16 @@ const EmployeeList: React.FC = () => {
     return 4;
   };
 
+  const activeQuery = (searchQuery || searchTerm).trim().toLowerCase();
+
   const filteredEmployees = employees
     .filter(emp => {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm ||
-        (emp.nip && emp.nip.toLowerCase().includes(searchLower)) ||
-        (emp.name && emp.name.toLowerCase().includes(searchLower)) ||
-        (emp.full_name && emp.full_name.toLowerCase().includes(searchLower)) ||
-        (emp.position && emp.position.toLowerCase().includes(searchLower)) ||
-        (emp.opd && emp.opd.toLowerCase().includes(searchLower));
+      const matchesSearch = !activeQuery ||
+        (emp.nip && emp.nip.toLowerCase().includes(activeQuery)) ||
+        (emp.name && emp.name.toLowerCase().includes(activeQuery)) ||
+        (emp.full_name && emp.full_name.toLowerCase().includes(activeQuery)) ||
+        (emp.position && emp.position.toLowerCase().includes(activeQuery)) ||
+        (emp.opd && emp.opd.toLowerCase().includes(activeQuery));
 
       const matchesStatus = !statusFilter ||
         (emp.status && emp.status.toUpperCase().includes(statusFilter.toUpperCase())) ||
@@ -292,6 +306,10 @@ const EmployeeList: React.FC = () => {
       const nipB = String(b.nip || '');
       return nipA.localeCompare(nipB);
     });
+
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="employee-list-container">
@@ -327,37 +345,37 @@ const EmployeeList: React.FC = () => {
         <table className="data-table">
           <thead>
             <tr>
-              <th>NIP</th>
-              <th>NAMA</th>
-              <th>STATUS ASN</th>
-              <th>GOLONGAN</th>
-              <th>JABATAN</th>
-              <th>MKG</th>
-              <th>STATUS PERKAWINAN</th>
-              <th>JUMLAH ANAK</th>
-              <th>AKSI</th>
+              <th style={{ textAlign: 'center' }}>NIP</th>
+              <th style={{ textAlign: 'center' }}>NAMA</th>
+              <th style={{ textAlign: 'center' }}>STATUS ASN</th>
+              <th style={{ textAlign: 'center' }}>GOLONGAN</th>
+              <th style={{ textAlign: 'center' }}>JABATAN</th>
+              <th style={{ textAlign: 'center' }}>MKG</th>
+              <th style={{ textAlign: 'center' }}>STATUS PERKAWINAN</th>
+              <th style={{ textAlign: 'center' }}>JUMLAH ANAK</th>
+              <th style={{ textAlign: 'center' }}>AKSI</th>
             </tr>
           </thead>
           <tbody>
-            {filteredEmployees.map(emp => (
-              <tr key={emp.id}>
-                <td style={{ fontWeight: 600 }}>{emp.nip}</td>
-                <td style={{ fontWeight: 600 }}>{emp.name || emp.full_name}</td>
-                <td>
+            {paginatedEmployees.map(emp => (
+              <tr key={emp.id} className={highlightId === String(emp.id) ? 'row-highlight' : ''}>
+                <td style={{ fontWeight: 400, textAlign: 'center' }}>{emp.nip}</td>
+                <td style={{ fontWeight: 400, textAlign: 'left' }}>{emp.name || emp.full_name}</td>
+                <td style={{ textAlign: 'center' }}>
                   <span className={`badge ${emp.status && emp.status.toLowerCase().includes('pns') ? 'badge-normal' : 'badge-attention'}`}>
                     {emp.status || emp.asn_status}
                   </span>
                 </td>
-                <td>{emp.rank || '-'}</td>
-                <td>{emp.position || '-'}</td>
-                <td>
-                  <strong>{emp.mkg_years || 0} Thn {emp.mkg_months || 0} Bln</strong>
+                <td style={{ textAlign: 'center' }}>{emp.rank || '-'}</td>
+                <td style={{ textAlign: 'left' }}>{emp.position || '-'}</td>
+                <td style={{ textAlign: 'center' }}>
+                  {emp.mkg_years !== undefined ? `${emp.mkg_years} Thn ${emp.mkg_months || 0} Bln` : '-'}
                 </td>
-                <td>{emp.marital_status || 'KAWIN'}</td>
-                <td>
+                <td style={{ textAlign: 'center' }}>{emp.marital_status || 'KAWIN'}</td>
+                <td style={{ textAlign: 'center' }}>
                   {emp.children_count !== undefined ? `${emp.children_count} Anak` : (emp.children ? `${emp.children.length} Anak` : '0 Anak')}
                 </td>
-                <td>
+                <td style={{ textAlign: 'center' }}>
                   <Link to={`/dashboard/employees/${emp.id}`} className="btn-text">Detail</Link>
                 </td>
               </tr>
@@ -373,11 +391,30 @@ const EmployeeList: React.FC = () => {
         </table>
       </div>
 
-      <div className="pagination">
-        <span>Menampilkan 1-{filteredEmployees.length} dari {filteredEmployees.length} data</span>
-        <div className="page-controls">
-          <button disabled>&lt; Prev</button>
-          <button disabled>Next &gt;</button>
+      <div className="pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+        <span>
+          Menampilkan {filteredEmployees.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + itemsPerPage, filteredEmployees.length)} dari {filteredEmployees.length} data
+        </span>
+        <div className="page-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button 
+            disabled={currentPage <= 1} 
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            className="btn-secondary"
+            style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', cursor: currentPage <= 1 ? 'not-allowed' : 'pointer', opacity: currentPage <= 1 ? 0.5 : 1 }}
+          >
+            &lt; Prev
+          </button>
+          <span style={{ fontSize: '0.85rem', fontWeight: 500, padding: '0 0.5rem', color: 'var(--text-main)' }}>
+            Halaman {currentPage} dari {totalPages}
+          </span>
+          <button 
+            disabled={currentPage >= totalPages} 
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            className="btn-secondary"
+            style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer', opacity: currentPage >= totalPages ? 0.5 : 1 }}
+          >
+            Next &gt;
+          </button>
         </div>
       </div>
 
@@ -394,10 +431,7 @@ const EmployeeList: React.FC = () => {
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
             <div className="compact-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Tambah Pegawai Baru (Manual)</h3>
-                <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Isi formulir data pegawai dan keluarga secara bertahap</span>
-              </div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>Tambah Pegawai Baru (Manual)</h3>
               <button
                 type="button"
                 onClick={handleRequestClose}
@@ -407,51 +441,26 @@ const EmployeeList: React.FC = () => {
               </button>
             </div>
 
-            {/* Step Wizard Indicator */}
-            <div className="compact-wizard-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', background: '#f8fafc', padding: '0.3rem 0.75rem', borderRadius: '6px', marginBottom: '0.45rem', border: '1px solid #e2e8f0' }}>
-              <div 
-                onClick={() => setCurrentStep(1)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 1 ? 1 : 0.6 }}
-              >
-                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 1 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>1</div>
-                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 1 ? 700 : 500, color: currentStep === 1 ? '#1e293b' : '#64748b' }}>Data Pegawai</span>
+            {/* Step Wizard Bar */}
+            <div className="compact-wizard-bar" style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '0.5rem', background: '#f8fafc', padding: '0.35rem 0.5rem', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: currentStep >= 1 ? '#2563eb' : '#94a3b8', fontWeight: currentStep === 1 ? 700 : 500, fontSize: '0.78rem' }}>
+                <span className="compact-wizard-circle" style={{ width: '18px', height: '18px', borderRadius: '50%', background: currentStep >= 1 ? '#2563eb' : '#cbd5e1', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>1</span>
+                1. Data Utama
               </div>
-
-              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.5rem' }}></div>
-
-              <div 
-                onClick={() => {
-                  if (!formData.nip || !formData.name) {
-                    alert("Mohon lengkapi NIP dan Nama Pegawai pada Langkah 1 terlebih dahulu.");
-                    return;
-                  }
-                  setCurrentStep(2);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 2 ? 1 : 0.6 }}
-              >
-                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 2 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>2</div>
-                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 2 ? 700 : 500, color: currentStep === 2 ? '#1e293b' : '#64748b' }}>Data Pasangan</span>
+              <div style={{ color: '#cbd5e1' }}>&gt;</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: currentStep >= 2 ? '#2563eb' : '#94a3b8', fontWeight: currentStep === 2 ? 700 : 500, fontSize: '0.78rem' }}>
+                <span className="compact-wizard-circle" style={{ width: '18px', height: '18px', borderRadius: '50%', background: currentStep >= 2 ? '#2563eb' : '#cbd5e1', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>2</span>
+                2. Data Pasangan
               </div>
-
-              <div style={{ flex: 1, height: '2px', background: '#cbd5e1', margin: '0 0.5rem' }}></div>
-
-              <div 
-                onClick={() => {
-                  if (!formData.nip || !formData.name) {
-                    alert("Mohon lengkapi NIP dan Nama Pegawai pada Langkah 1 terlebih dahulu.");
-                    return;
-                  }
-                  setCurrentStep(3);
-                }}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', opacity: currentStep === 3 ? 1 : 0.6 }}
-              >
-                <div className="compact-wizard-circle" style={{ width: '22px', height: '22px', borderRadius: '50%', background: currentStep === 3 ? '#2563eb' : '#94a3b8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem' }}>3</div>
-                <span className="compact-wizard-text" style={{ fontSize: '0.78rem', fontWeight: currentStep === 3 ? 700 : 500, color: currentStep === 3 ? '#1e293b' : '#64748b' }}>Data Anak</span>
+              <div style={{ color: '#cbd5e1' }}>&gt;</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: currentStep >= 3 ? '#2563eb' : '#94a3b8', fontWeight: currentStep === 3 ? 700 : 500, fontSize: '0.78rem' }}>
+                <span className="compact-wizard-circle" style={{ width: '18px', height: '18px', borderRadius: '50%', background: currentStep >= 3 ? '#2563eb' : '#cbd5e1', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>3</span>
+                3. Data Anak
               </div>
             </div>
 
             <form onSubmit={handleFormSubmit}>
-              {/* STEP 1: DATA PEGAWAI */}
+              {/* STEP 1 */}
               {currentStep === 1 && (
                 <div>
                   <div className="compact-section-wrapper" style={{ marginBottom: '0.45rem' }}>
@@ -465,7 +474,7 @@ const EmployeeList: React.FC = () => {
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nama & Gelar *</label>
-                        <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Contoh: Ahmad Budi, S.E." required />
+                        <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="Nama lengkap pegawai" required />
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIK</label>
@@ -480,11 +489,11 @@ const EmployeeList: React.FC = () => {
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tempat Lahir *</label>
-                        <input type="text" name="birth_place" value={formData.birth_place} onChange={handleInputChange} placeholder="Kota/Kabupaten" />
+                        <input type="text" name="birth_place" value={formData.birth_place} onChange={handleInputChange} placeholder="Kota lahir" required />
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Lahir *</label>
-                        <DateInput name="birth_date" value={formData.birth_date} onChange={handleInputChange} placeholder="dd/mm/yyyy" />
+                        <DateInput name="birth_date" value={formData.birth_date} onChange={handleInputChange} placeholder="dd/mm/yyyy" required />
                       </div>
                     </div>
                   </div>
@@ -516,12 +525,12 @@ const EmployeeList: React.FC = () => {
                         </select>
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Tahun)</label>
-                        <input type="number" name="mkg_years" min="0" value={formData.mkg_years} onChange={handleInputChange} placeholder="0" />
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>MKG (Tahun)</label>
+                        <input type="number" name="mkg_years" min="0" value={formData.mkg_years} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Masa Kerja Golongan (Bulan)</label>
-                        <input type="number" name="mkg_months" min="0" max="11" value={formData.mkg_months} onChange={handleInputChange} placeholder="0" />
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>MKG (Bulan)</label>
+                        <input type="number" name="mkg_months" min="0" max="11" value={formData.mkg_months} onChange={handleInputChange} />
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal MKG (TMT MKG)</label>
@@ -537,15 +546,15 @@ const EmployeeList: React.FC = () => {
                     <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.2rem 0.6rem' }}>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Pangkat / Golongan</label>
-                        <input type="text" name="rank" value={formData.rank} onChange={handleInputChange} placeholder="Contoh: III/a atau IX" />
+                        <input type="text" name="rank" value={formData.rank} onChange={handleInputChange} placeholder="Contoh: III/a" />
                       </div>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jabatan</label>
-                        <input type="text" name="position" value={formData.position} onChange={handleInputChange} placeholder="Contoh: Analis Kepegawaian" />
+                        <input type="text" name="position" value={formData.position} onChange={handleInputChange} placeholder="Jabatan" />
                       </div>
                       <div className="form-group">
-                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Unit Kerja</label>
-                        <input type="text" name="unit_kerja" value={formData.unit_kerja} onChange={handleInputChange} placeholder="Contoh: Bidang Mutasi" />
+                        <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Unit Kerja (OPD)</label>
+                        <input type="text" name="opd" value={formData.opd} onChange={handleInputChange} placeholder="Unit Kerja / OPD" />
                       </div>
                     </div>
                   </div>
@@ -557,288 +566,157 @@ const EmployeeList: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.2rem 0.6rem' }}>
                       <div className="form-group">
                         <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Alamat Lengkap</label>
-                        <input type="text" name="address" value={formData.address} onChange={handleInputChange} placeholder="Jl. Contoh No. X..." />
+                        <input type="text" name="address" value={formData.address} onChange={handleInputChange} placeholder="Alamat rumah" />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="compact-modal-footer flex gap-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
-                    <button type="button" className="btn-secondary" onClick={handleRequestClose}>Batal</button>
-                    <button 
-                      type="button" 
-                      className="btn-primary" 
-                      onClick={() => {
-                        if (!formData.nip || !formData.name) {
-                          alert("Mohon isi NIP dan Nama Pegawai terlebih dahulu.");
-                          return;
-                        }
-                        setCurrentStep(2);
-                      }}
-                    >
-                      Lanjut: Data Pasangan &gt;
-                    </button>
                   </div>
                 </div>
               )}
 
-              {/* STEP 2: DATA PASANGAN */}
+              {/* STEP 2 */}
               {currentStep === 2 && (
                 <div>
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', margin: 0, borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
-                        Data Pasangan (Suami / Istri)
-                      </h4>
-                      {formData.marital_status !== 'KAWIN' && (
-                        <span style={{ fontSize: '0.8rem', background: '#fef3c7', color: '#92400e', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                          Status: {formData.marital_status} (Opsional / Dapat dilewati)
-                        </span>
-                      )}
+                  <h4 style={{ fontSize: '0.9rem', color: '#1e3a8a', marginBottom: '0.5rem', borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                    2. Data Suami / Istri (Opsional)
+                  </h4>
+                  <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem 0.6rem' }}>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nama Suami / Istri</label>
+                      <input type="text" name="name" value={spouseData.name} onChange={handleSpouseChange} placeholder="Nama Lengkap Pasangan" />
                     </div>
-
-                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
-                      Isi data pasangan jika pegawai telah menikah, atau klik <strong>Lanjut: Data Anak</strong> untuk melewati tahap ini.
-                    </p>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Nama Pasangan</label>
-                        <input 
-                          type="text" 
-                          name="name" 
-                          value={spouseData.name} 
-                          onChange={handleSpouseChange} 
-                          placeholder="Nama lengkap suami/istri" 
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIK Pasangan</label>
-                        <input 
-                          type="text" 
-                          name="nik" 
-                          value={spouseData.nik} 
-                          onChange={handleSpouseChange} 
-                          placeholder="16 digit NIK" 
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tempat Lahir</label>
-                        <input 
-                          type="text" 
-                          name="birth_place" 
-                          value={spouseData.birth_place} 
-                          onChange={handleSpouseChange} 
-                          placeholder="Kota/Kabupaten" 
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal Lahir</label>
-                        <DateInput 
-                          name="birth_date" 
-                          value={spouseData.birth_date} 
-                          onChange={handleSpouseChange} 
-                          placeholder="dd/mm/yyyy" 
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal Perkawinan</label>
-                        <DateInput 
-                          name="marriage_date" 
-                          value={spouseData.marriage_date} 
-                          onChange={handleSpouseChange} 
-                          placeholder="dd/mm/yyyy" 
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pekerjaan</label>
-                        <input 
-                          type="text" 
-                          name="job" 
-                          value={spouseData.job} 
-                          onChange={handleSpouseChange} 
-                          placeholder="Contoh: PNS / Swasta / Wiraswasta" 
-                        />
-                      </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIK</label>
+                      <input type="text" name="nik" value={spouseData.nik} onChange={handleSpouseChange} placeholder="16 digit NIK" />
                     </div>
-                  </div>
-
-                  <div className="flex gap-4 mt-4" style={{ justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                    <button type="button" className="btn-secondary" onClick={() => setCurrentStep(1)}>&lt; Kembali ke Data Pegawai</button>
-                    <button type="button" className="btn-primary" onClick={() => setCurrentStep(3)}>Lanjut: Data Anak &gt;</button>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Pekerjaan</label>
+                      <input type="text" name="job" value={spouseData.job} onChange={handleSpouseChange} placeholder="Pekerjaan saat ini" />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tempat Lahir</label>
+                      <input type="text" name="birth_place" value={spouseData.birth_place} onChange={handleSpouseChange} placeholder="Kota lahir" />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Lahir</label>
+                      <DateInput name="birth_date" value={spouseData.birth_date} onChange={handleSpouseChange} placeholder="dd/mm/yyyy" />
+                    </div>
+                    <div className="form-group">
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Pernikahan</label>
+                      <DateInput name="marriage_date" value={spouseData.marriage_date} onChange={handleSpouseChange} placeholder="dd/mm/yyyy" />
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* STEP 3: DATA ANAK */}
+              {/* STEP 3 */}
               {currentStep === 3 && (
                 <div>
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <h4 style={{ fontSize: '0.95rem', color: '#1e3a8a', margin: 0, borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
-                        Data Anak ({childrenData.length} Anak)
-                      </h4>
-                      <button 
-                        type="button" 
-                        className="btn-secondary" 
-                        onClick={handleAddChild} 
-                        style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
-                      >
-                        + Tambah Anak
-                      </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontSize: '0.9rem', color: '#1e3a8a', margin: 0, borderLeft: '3px solid #2563eb', paddingLeft: '0.5rem' }}>
+                      3. Data Anak (Opsional)
+                    </h4>
+                    <button type="button" className="btn-secondary" onClick={handleAddChild} style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
+                      + Tambah Anak
+                    </button>
+                  </div>
+
+                  {childrenData.length === 0 ? (
+                    <div style={{ padding: '1rem', textAlign: 'center', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1', fontSize: '0.8rem', color: '#64748b' }}>
+                      Belum ada data anak ditambahkan. Klik "+ Tambah Anak" jika pegawai memiliki anak.
                     </div>
-
-                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
-                      Tambahkan data anak untuk tunjangan keluarga (jika ada). Anda dapat menambah lebih dari 1 anak.
-                    </p>
-
-                    {childrenData.length === 0 ? (
-                      <div style={{ background: '#f8fafc', padding: '2rem', textAlign: 'center', borderRadius: '8px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem' }}>Belum ada data anak yang ditambahkan.</p>
-                        <button 
-                          type="button" 
-                          className="btn-primary mt-3" 
-                          onClick={handleAddChild}
-                          style={{ fontSize: '0.85rem' }}
-                        >
-                          + Tambah Data Anak
-                        </button>
-                      </div>
-                    ) : (
-                      childrenData.map((child, idx) => (
-                        <div key={idx} style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                            <strong style={{ fontSize: '0.85rem', color: '#1e293b' }}>Anak ke-{idx + 1}</strong>
-                            <button 
-                              type="button" 
-                              onClick={() => handleRemoveChild(idx)}
-                              style={{ background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.75rem', cursor: 'pointer' }}
-                            >
-                              Hapus
-                            </button>
+                  ) : (
+                    childrenData.map((child, idx) => (
+                      <div key={idx} style={{ background: '#f8fafc', padding: '0.5rem', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1e293b' }}>Anak Ke-{idx + 1}</span>
+                          <button type="button" onClick={() => handleRemoveChild(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>
+                            Hapus
+                          </button>
+                        </div>
+                        <div className="compact-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.3rem 0.5rem' }}>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Nama Anak</label>
+                            <input type="text" value={child.name} onChange={(e) => handleChildChange(idx, 'name', e.target.value)} placeholder="Nama Lengkap" />
                           </div>
-                          
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Nama Anak *</label>
-                              <input 
-                                type="text" 
-                                value={child.name} 
-                                onChange={(e) => handleChildChange(idx, 'name', e.target.value)} 
-                                placeholder="Nama lengkap anak" 
-                                required
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>NIK Anak</label>
-                              <input 
-                                type="text" 
-                                value={child.nik} 
-                                onChange={(e) => handleChildChange(idx, 'nik', e.target.value)} 
-                                placeholder="16 digit NIK" 
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Tempat Lahir</label>
-                              <input 
-                                type="text" 
-                                value={child.birth_place} 
-                                onChange={(e) => handleChildChange(idx, 'birth_place', e.target.value)} 
-                                placeholder="Kota/Kabupaten" 
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Tanggal Lahir</label>
-                              <DateInput 
-                                name={`child_birth_${idx}`}
-                                value={child.birth_date} 
-                                onChange={(e) => handleChildChange(idx, 'birth_date', e.target.value)} 
-                                placeholder="dd/mm/yyyy" 
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Jenis Kelamin</label>
-                              <select 
-                                value={child.gender} 
-                                onChange={(e) => handleChildChange(idx, 'gender', e.target.value)}
-                              >
-                                <option value="L">Laki-laki (L)</option>
-                                <option value="P">Perempuan (P)</option>
-                              </select>
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Nomor Akta Lahir</label>
-                              <input 
-                                type="text" 
-                                value={child.document_number} 
-                                onChange={(e) => handleChildChange(idx, 'document_number', e.target.value)} 
-                                placeholder="No. Akta Kelahiran" 
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Status Anak</label>
-                              <select 
-                                value={child.child_status} 
-                                onChange={(e) => handleChildChange(idx, 'child_status', e.target.value)}
-                              >
-                                <option value="Anak Kandung">Anak Kandung</option>
-                                <option value="Anak Tiri">Anak Tiri</option>
-                                <option value="Anak Angkat">Anak Angkat</option>
-                              </select>
-                            </div>
-                            <div className="form-group">
-                              <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Pendidikan</label>
-                              <select 
-                                value={child.education || ''} 
-                                onChange={(e) => handleChildChange(idx, 'education', e.target.value)}
-                              >
-                                <option value="">-- Pilih Pendidikan --</option>
-                                <option value="Belum Sekolah">Belum Sekolah</option>
-                                <option value="PAUD / TK">PAUD / TK</option>
-                                <option value="SD / Sederajat">SD / Sederajat</option>
-                                <option value="SMP / Sederajat">SMP / Sederajat</option>
-                                <option value="SMA / SMK / Sederajat">SMA / SMK / Sederajat</option>
-                                <option value="D1 / D2 / D3">D1 / D2 / D3</option>
-                                <option value="S1 / D4">S1 / D4</option>
-                                <option value="S2">S2</option>
-                                <option value="S3">S3</option>
-                              </select>
-                            </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>NIK</label>
+                            <input type="text" value={child.nik} onChange={(e) => handleChildChange(idx, 'nik', e.target.value)} placeholder="NIK Anak" />
+                          </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Jenis Kelamin</label>
+                            <select value={child.gender} onChange={(e) => handleChildChange(idx, 'gender', e.target.value)}>
+                              <option value="L">Laki-laki (L)</option>
+                              <option value="P">Perempuan (P)</option>
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Tanggal Lahir</label>
+                            <DateInput name="birth_date" value={child.birth_date} onChange={(e) => handleChildChange(idx, 'birth_date', e.target.value)} placeholder="dd/mm/yyyy" />
+                          </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Status Hubungan</label>
+                            <select value={child.child_status} onChange={(e) => handleChildChange(idx, 'child_status', e.target.value)}>
+                              <option value="Anak Kandung">Anak Kandung</option>
+                              <option value="Anak Tiri">Anak Tiri</option>
+                              <option value="Anak Angkat">Anak Angkat</option>
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label style={{ fontSize: '0.72rem', fontWeight: 600 }}>Pendidikan</label>
+                            <input type="text" value={child.education} onChange={(e) => handleChildChange(idx, 'education', e.target.value)} placeholder="Contoh: SD/SMP/Kuliah" />
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
-
-                  <div className="flex gap-4 mt-4" style={{ justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                    <button type="button" className="btn-secondary" onClick={() => setCurrentStep(2)}>&lt; Kembali ke Data Pasangan</button>
-                    <button type="submit" className="btn-primary">Simpan Pegawai</button>
-                  </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
+
+              {/* Wizard Footer Buttons */}
+              <div className="compact-modal-footer" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
+                <button type="button" className="btn-secondary" onClick={handleRequestClose} style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}>
+                  Batal
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {currentStep > 1 && (
+                    <button type="button" className="btn-secondary" onClick={() => setCurrentStep(prev => prev - 1)} style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}>
+                      &lt; Kembali
+                    </button>
+                  )}
+                  {currentStep < 3 ? (
+                    <button type="button" className="btn-primary" onClick={() => setCurrentStep(prev => prev + 1)} style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}>
+                      Lanjut &gt;
+                    </button>
+                  ) : (
+                    <button type="submit" className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}>
+                      Simpan Seluruh Data
+                    </button>
+                  )}
+                </div>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Confirmation Modals */}
+      {/* Save Confirmation Modal */}
       <ConfirmModal
         isOpen={showSaveConfirm}
         title="Konfirmasi Simpan Data"
-        message="Apakah Anda yakin ingin menyimpan seluruh data pegawai beserta data keluarga ini?"
+        message="Apakah Anda yakin data pegawai dan keluarga yang dimasukkan sudah benar?"
         confirmText="Ya, Simpan"
-        cancelText="Batal"
-        variant="primary"
+        cancelText="Periksa Lagi"
         onConfirm={handleConfirmSave}
         onCancel={() => setShowSaveConfirm(false)}
       />
 
+      {/* Cancel Confirmation Modal */}
       <ConfirmModal
         isOpen={showCancelConfirm}
-        title="Konfirmasi Batal"
-        message="Ada perubahan data yang belum disimpan. Apakah Anda yakin ingin membatalkan dan menutup form ini?"
+        title="Batalkan Pengisian Data?"
+        message="Data yang sudah diisi dalam formulir akan hilang jika Anda membatalkan."
         confirmText="Ya, Batalkan"
-        cancelText="Kembali ke Form"
-        variant="warning"
+        cancelText="Lanjutkan Pengisian"
         onConfirm={handleConfirmCancel}
         onCancel={() => setShowCancelConfirm(false)}
       />
