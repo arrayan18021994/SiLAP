@@ -1,0 +1,78 @@
+.import-wizard-container {
+  padding: 1.5rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
+.upload-box {
+  border: 2px dashed var(--border-color);
+  padding: 3rem;
+  border-radius: 8px;
+  background: var(--bg-color);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.upload-box:hover {
+  border-color: var(--primary-color);
+  background: #eff6ff;
+}
+
+.summary-boxes {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.summary-box {
+  flex: 1;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: white;
+  text-align: center;
+}
+
+.summary-box.success {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.summary-box.danger {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.summary-box h4 {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.summary-box.success h4 { color: #047857; }
+.summary-box.danger h4 { color: #b91c1c; }
+
+.summary-box .val {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.summary-box.success .val { color: #047857; }
+.summary-box.danger .val { color: #b91c1c; }
+
+.text-danger {
+  color: var(--danger);
+}
+
+.badge.danger {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}

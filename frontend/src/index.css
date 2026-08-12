@@ -1,0 +1,258 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* SiLAP Design System: Elegant Government Enterprise */
+  
+  /* Brand Colors (Dark & Yellow) */
+  --primary-color: #FFD700;    /* Bright Yellow */
+  --primary-hover: #FACC15;
+  --primary-light: rgba(255, 215, 0, 0.1);
+  --primary-text: #1a1a1a;     /* Text on yellow background */
+  
+  /* Neutral Palette (Light Mode) */
+  --bg-app: #f4f5f7;           /* Light gray app background */
+  --bg-surface: #ffffff;       /* White cards */
+  --bg-surface-hover: #f9fafb;
+  
+  --text-main: #1e293b;        /* Dark text */
+  --text-muted: #64748b;       
+  --text-inverse: #1a1a1a;     /* Text on yellow */
+  
+  --border-color: #e2e8f0;
+  
+  /* Status Colors */
+  --status-normal: #10b981;
+  --status-info: #3b82f6;
+  --status-attention: #FFD700; 
+  --status-urgent: #f97316;
+  --status-overdue: #ef4444;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  /* Enforcing Dark Mode */
+  --bg-app: #121418;           /* Very dark navy/black background */
+  --bg-surface: #1e2128;       /* Slightly lighter dark cards */
+  --bg-surface-hover: #2a2e37;
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  --border-color: #2a2e37;
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13px; /* Compact body font */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.5rem; } /* 24px */
+h2 { font-size: 1.25rem; } /* 20px */
+h3 { font-size: 1.125rem; } /* 18px */
+h4 { font-size: 1rem; } /* 16px */
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Base Buttons */
+.btn-primary, .btn-secondary, .btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px; /* Professional, not overly rounded */
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-inverse);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-surface-hover);
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--primary-color);
+}
+.btn-text:hover {
+  background-color: var(--primary-light);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--text-muted);
+}
+
+.form-control, .form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-main);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus, .form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+}
+
+/* Tables (Compact) */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.table th {
+  padding: 0.6rem 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-app);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background-color 0.1s;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.badge-normal { background-color: rgba(16, 185, 129, 0.1); color: var(--status-normal); border: 1px solid rgba(16, 185, 129, 0.2); }
+.badge-info { background-color: rgba(59, 130, 246, 0.1); color: var(--status-info); border: 1px solid rgba(59, 130, 246, 0.2); }
+.badge-attention { background-color: rgba(234, 179, 8, 0.1); color: var(--status-attention); border: 1px solid rgba(234, 179, 8, 0.2); }
+.badge-urgent { background-color: rgba(249, 115, 22, 0.1); color: var(--status-urgent); border: 1px solid rgba(249, 115, 22, 0.2); }
+.badge-overdue { background-color: rgba(239, 68, 68, 0.1); color: var(--status-overdue); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+/* Utilities */
+.text-muted { color: var(--text-muted); }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+
+/* Dashboard Common */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-surface-hover) 25%, var(--border-color) 50%, var(--bg-surface-hover) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
