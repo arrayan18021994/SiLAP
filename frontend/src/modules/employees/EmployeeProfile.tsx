@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import RankHistoryTab from './RankHistoryTab';
+import PositionHistoryTab from './PositionHistoryTab';
 import ServicePeriodTab from './ServicePeriodTab';
 import EmployeeLeaveTab from '../leave/EmployeeLeaveTab';
 import EmployeeKGBTab from '../kgb/EmployeeKGBTab';
@@ -255,6 +257,8 @@ const EmployeeProfile: React.FC = () => {
             </div>
           )}
 
+          {activeTab === 'pangkat' && <RankHistoryTab employeeId={id} employeeData={emp} />}
+          {activeTab === 'jabatan' && <PositionHistoryTab employeeId={id} employeeData={emp} />}
           {activeTab === 'masa-kerja' && <ServicePeriodTab employeeId={id} />}
           {activeTab === 'keluarga' && <EmployeeFamilyTab employeeId={id} />}
           {activeTab === 'peristiwa' && <LifeEventsTimeline />}
