@@ -143,28 +143,37 @@ const EmployeeProfile: React.FC = () => {
       </div>
       {loading && <div style={{ marginBottom: '1rem', color: '#64748b' }}>Memuat data pegawai...</div>}
       
-      <div className="card profile-header-card flex items-center gap-4 mb-4" style={{ padding: '2rem' }}>
-        <div className="profile-photo" style={{ width: '80px', height: '80px', borderRadius: '8px', background: 'var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--text-muted)' }}>
-          👤
-        </div>
-        <div className="profile-info flex-1">
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{emp.full_name || emp.name}</h2>
-          <div className="flex gap-4 text-muted" style={{ fontSize: '12px', marginBottom: '1rem' }}>
-            <span>NIP. {emp.nip}</span>
-            <span>•</span>
-            <span>{emp.rank || '-'}</span>
-            <span>•</span>
-            <span>{emp.position || '-'}</span>
+      <div className="card profile-header-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', width: '100%', gap: '1.25rem', marginBottom: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1 }}>
+          <div className="profile-photo" style={{ width: '64px', height: '64px', minWidth: '64px', borderRadius: '8px', background: 'var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', color: 'var(--text-muted)' }}>
+            👤
           </div>
-          <div className="flex items-center gap-4">
-            <span className="badge badge-normal">● Aktif</span>
-            <span className="text-muted" style={{ fontSize: '12px' }}>
-              Masa Kerja Golongan: <strong>{emp.mkg_years || 0} Thn {emp.mkg_months || 0} Bln</strong> (TMT: {emp.tmt_mkg_formatted || toDisplayFormat(emp.tmt_mkg) || '-'})
-            </span>
+          <div className="profile-info">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.2rem', margin: 0 }}>{emp.full_name || emp.name}</h2>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', color: 'var(--text-muted)', fontSize: '12px', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
+              <span>NIP. {emp.nip}</span>
+              <span>•</span>
+              <span>{emp.rank || '-'}</span>
+              <span>•</span>
+              <span>{emp.position || '-'}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '12px' }}>
+              <span className="badge badge-normal" style={{ fontWeight: 500 }}>● Aktif</span>
+              <span className="text-muted" style={{ fontSize: '12px', fontWeight: 400 }}>
+                Masa Kerja Golongan: <span style={{ fontWeight: 500, color: 'var(--text-main)' }}>{emp.mkg_years || 0} Thn {emp.mkg_months || 0} Bln</span> (TMT: {emp.tmt_mkg_formatted || toDisplayFormat(emp.tmt_mkg) || '-'})
+              </span>
+            </div>
           </div>
         </div>
         <div className="profile-actions">
-          <button className="btn-secondary" onClick={() => { setFormData(employee || emp); setShowEditModal(true); }}>Edit Profil</button>
+          <button 
+            className="btn-secondary" 
+            onClick={() => { setFormData(employee || emp); setShowEditModal(true); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '12px', fontWeight: 400, padding: '0.35rem 0.75rem' }}
+            title="Edit Profil Pegawai"
+          >
+            ✏️ Edit Profil
+          </button>
         </div>
       </div>
 
@@ -190,57 +199,57 @@ const EmployeeProfile: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>NIP</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.nip || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.nip || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Nama Lengkap & Gelar</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.full_name || emp.name || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.full_name || emp.name || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>NIK</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.nik || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.nik || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Tempat / Tanggal Lahir</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>
                     {emp.birth_place || '-'}, {emp.birth_date_formatted || toDisplayFormat(emp.birth_date) || '-'}
-                  </strong>
+                  </span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Jenis Kelamin</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.gender === 'L' ? 'Laki-laki (L)' : emp.gender === 'P' ? 'Perempuan (P)' : '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.gender === 'L' ? 'Laki-laki (L)' : emp.gender === 'P' ? 'Perempuan (P)' : '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Status ASN</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.status || emp.asn_status || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.status || emp.asn_status || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>TMT ASN / CPNS</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.tmt_cpns_formatted || toDisplayFormat(emp.tmt_cpns) || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.tmt_cpns_formatted || toDisplayFormat(emp.tmt_cpns) || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Masa Kerja Golongan (MKG)</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#2563eb' }}>{emp.mkg_years || 0} Tahun {emp.mkg_months || 0} Bulan</strong>
+                  <span style={{ fontSize: '0.88rem', color: '#2563eb', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.mkg_years || 0} Tahun {emp.mkg_months || 0} Bulan</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Tanggal MKG (TMT MKG)</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#2563eb' }}>{emp.tmt_mkg_formatted || toDisplayFormat(emp.tmt_mkg) || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: '#2563eb', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.tmt_mkg_formatted || toDisplayFormat(emp.tmt_mkg) || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Status Perkawinan</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.marital_status || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.marital_status || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Pangkat / Golongan</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.rank || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.rank || '-'}</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Jabatan</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.position || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.position || '-'}</span>
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block' }}>Alamat</label>
-                  <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{emp.address || '-'}</strong>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 400, display: 'block', marginTop: '2px' }}>{emp.address || '-'}</span>
                 </div>
               </div>
             </div>

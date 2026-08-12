@@ -74,47 +74,51 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
         const data = await res.json();
         setMembers(data);
       } else {
-        // Fallback demo data if employee family table is empty
+        // Fallback demo data if API endpoint returns error
         setMembers([
           {
             id: 101,
             employee_id: Number(empId),
             relationship_type: 'PASANGAN',
-            name: 'Siti Aminah, S.Pd.',
+            name: 'Hj. Siti Aminah, S.Pd.',
             gender: 'P',
-            nik: '1172015204900002',
-            birth_place: 'Banda Aceh',
-            birth_date: '1990-04-12',
+            nik: '3201123456780002',
+            birth_place: 'Cimahi',
+            birth_date: '1974-08-15',
             status: 'ACTIVE',
             child_status: 'AKTIF',
-            age: 36
+            age: 51
           },
           {
             id: 102,
             employee_id: Number(empId),
             relationship_type: 'ANAK',
-            name: 'Rizky Ramadhan',
+            name: 'Budi Santoso',
             gender: 'L',
-            nik: '1172011001050003',
-            birth_place: 'Sabang',
-            birth_date: '2005-01-10', // 21 years old in 2026
-            status: 'INACTIVE',
-            child_status: 'PERLU_SURAT_KULIAH',
-            age: 21,
-            needs_school_letter: true
+            nik: '3201123456780003',
+            birth_place: 'Bandung',
+            birth_date: '2003-02-10', // 23 years old
+            status: 'ACTIVE',
+            child_status: 'AKTIF_KULIAH',
+            school_letter_number: '421/102/UNPAD/2025',
+            school_letter_date: '2025-01-15',
+            school_letter_valid_until: '2026-08-31',
+            document_file_name: 'Surat_Kuliah_Budi.pdf',
+            age: 23,
+            needs_school_letter: false
           },
           {
             id: 103,
             employee_id: Number(empId),
             relationship_type: 'ANAK',
-            name: 'Nabila Putri',
+            name: 'Anisa Supriyadi',
             gender: 'P',
-            nik: '1172015508120004',
-            birth_place: 'Sabang',
-            birth_date: '2015-08-05',
+            nik: '3201123456780004',
+            birth_place: 'Bandung',
+            birth_date: '2008-11-24', // 17 years old
             status: 'ACTIVE',
             child_status: 'AKTIF',
-            age: 11,
+            age: 17,
             needs_school_letter: false
           }
         ]);
@@ -160,12 +164,11 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
       });
 
       if (res.ok) {
-        await res.json();
         setMessage({ type: 'success', text: `Surat Aktif Kuliah untuk ${selectedChild.name} berhasil diunggah! Status data anak kembali AKTIF.` });
         setShowUploadModal(false);
         fetchFamilyMembers();
       } else {
-        // Fallback local state update if API direct response is unavailable
+        // Fallback local state update
         setMembers(prev => prev.map(m => m.id === selectedChild.id ? {
           ...m,
           status: 'ACTIVE',
@@ -272,39 +275,59 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
     }
   };
 
+  // VERIFICATION LOGIC FOR 21+ CHILDREN:
+  // If child is age >= 21 AND HAS NOT uploaded Surat Aktif Kuliah, REQUIRES VERIFICATION!
+  // If child HAS uploaded Surat Aktif Kuliah (hasValidLetter), NO VERIFICATION NEEDED & COUNTED AS ACTIVE!
   const childrenRequiringLetter = members.filter(m => {
     const rel = (m.relationship_type || '').toUpperCase();
-    return (rel.includes('ANAK') || rel.includes('CHILD')) &&
-           ((m.age !== undefined && m.age >= 21) || m.needs_school_letter || m.status === 'INACTIVE');
+    const isChild = rel.includes('ANAK') || rel.includes('CHILD');
+    const isAge21Plus = (m.age !== undefined && m.age >= 21) || m.needs_school_letter;
+    const hasValidLetter = Boolean(m.school_letter_number || m.document_file_name);
+    return isChild && isAge21Plus && !hasValidLetter;
   });
 
-  const activeSpouses = members.filter(m => (m.relationship_type || '').toUpperCase().includes('PASANGAN') || (m.relationship_type || '').toUpperCase().includes('ISTRI') || (m.relationship_type || '').toUpperCase().includes('SUAMI'));
-  const activeChildren = members.filter(m => ((m.relationship_type || '').toUpperCase().includes('ANAK') || (m.relationship_type || '').toUpperCase().includes('CHILD')) && m.status === 'ACTIVE');
+  const activeSpouses = members.filter(m => {
+    const rel = (m.relationship_type || '').toUpperCase();
+    return rel.includes('PASANGAN') || rel.includes('ISTRI') || rel.includes('SUAMI');
+  });
+
+  const activeChildren = members.filter(m => {
+    const rel = (m.relationship_type || '').toUpperCase();
+    const isChild = rel.includes('ANAK') || rel.includes('CHILD');
+    const isAge21Plus = (m.age !== undefined && m.age >= 21) || m.needs_school_letter;
+    const hasValidLetter = Boolean(m.school_letter_number || m.document_file_name);
+
+    if (!isChild) return false;
+    // If age 21+ child has NOT uploaded letter, they are NOT covered/active!
+    if (isAge21Plus && !hasValidLetter) return false;
+    return m.status === 'ACTIVE' || hasValidLetter;
+  });
 
   return (
-    <div className="employee-family-tab">
-      <div className="sp-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+    <div className="employee-family-tab" style={{ fontSize: '0.85rem' }}>
+      {/* Compact Header */}
+      <div className="sp-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)' }}>Data Keluarga & Hak Tunjangan Anak</h3>
-          <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-main)', fontWeight: 600 }}>Data Keluarga & Hak Tunjangan Anak</h3>
+          <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
             Kelola data suami/istri, anak, dan pembaruan Surat Keterangan Aktif Kuliah untuk anak berusia 21+ tahun.
           </p>
         </div>
-        <button className="btn-primary" onClick={handleOpenAddModal} style={{ padding: '0.6rem 1.2rem', fontWeight: 600 }}>
+        <button className="btn-primary" onClick={handleOpenAddModal} style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', fontWeight: 500 }}>
           + Tambah Anggota Keluarga
         </button>
       </div>
 
       {loading && (
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Memuat data keluarga...</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Memuat data keluarga...</div>
       )}
 
       {message && (
         <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`} style={{
-          padding: '0.85rem 1rem',
-          borderRadius: '8px',
-          marginBottom: '1.25rem',
-          fontSize: '0.9rem',
+          padding: '0.5rem 0.75rem',
+          borderRadius: '6px',
+          marginBottom: '0.65rem',
+          fontSize: '0.8rem',
           background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
           color: message.type === 'success' ? '#15803d' : '#b91c1c',
           border: `1px solid ${message.type === 'success' ? '#86efac' : '#fca5a5'}`
@@ -313,84 +336,81 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
         </div>
       )}
 
-      {/* Warning Notification Banner for Children >= 21 Years */}
+      {/* Warning Notification Banner for Children >= 21 Years (ONLY shown if NOT uploaded) */}
       {childrenRequiringLetter.length > 0 && (
         <div style={{
           background: 'linear-gradient(135deg, #fffbe5 0%, #fef3c7 100%)',
           border: '1px solid #f59e0b',
-          borderRadius: '10px',
-          padding: '1.25rem',
-          marginBottom: '1.5rem',
-          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+          borderRadius: '8px',
+          padding: '0.55rem 0.85rem',
+          marginBottom: '0.65rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-            <div style={{ fontSize: '2rem', lineHeight: 1 }}>🎓</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ fontSize: '1.25rem', lineHeight: 1 }}>🎓</div>
             <div style={{ flex: 1 }}>
-              <h4 style={{ margin: '0 0 0.4rem', color: '#92400e', fontSize: '1.05rem', fontWeight: 700 }}>
-                Pengingat Tunjangan Anak (Usia 21+ Tahun)
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.88rem', color: '#b45309', lineHeight: 1.5 }}>
-                Sistem mendeteksi terdapat <strong>{childrenRequiringLetter.length} anak</strong> yang telah mencapai usia 21 tahun atau lebih. 
-                Sesuai ketentuannya, untuk mempertahankan hak tunjangan dan mengaktifkan kembali data anak, Anda harus mengunggah <strong>Surat Keterangan Aktif Kuliah</strong>.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-                {childrenRequiringLetter.map(child => (
-                  <div key={child.id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    background: '#ffffff',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #fcd34d'
-                  }}>
-                    <div>
-                      <strong style={{ color: '#1e293b', fontSize: '0.95rem' }}>{child.name}</strong>
-                      <span style={{ fontSize: '0.85rem', color: '#64748b', marginLeft: '0.75rem' }}>
-                        Usia: {child.age ?? 21} Tahun • Status: <span style={{ color: '#ef4444', fontWeight: 600 }}>TIDAK AKTIF / PERLU SURAT KULIAH</span>
-                      </span>
-                    </div>
-                    <button
-                      className="btn-primary"
-                      onClick={() => handleOpenUploadModal(child)}
-                      style={{
-                        padding: '0.45rem 0.95rem',
-                        fontSize: '0.82rem',
-                        background: '#d97706',
-                        borderColor: '#b45309',
-                        fontWeight: 600
-                      }}
-                    >
-                      📤 Upload Surat Aktif Kuliah
-                    </button>
-                  </div>
-                ))}
+              <div style={{ color: '#92400e', fontSize: '0.85rem', fontWeight: 700 }}>
+                Pengingat Tunjangan Anak (Usia 21+ Tahun) - Perlu Verifikasi
               </div>
+              <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#b45309', lineHeight: 1.3 }}>
+                Terdapat <strong>{childrenRequiringLetter.length} anak</strong> berusia 21+ tahun yang belum mengunggah Surat Keterangan Aktif Kuliah. Unggah surat agar hak tunjangan kembali aktif.
+              </p>
             </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.4rem' }}>
+            {childrenRequiringLetter.map(child => (
+              <div key={child.id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: '#ffffff',
+                padding: '0.4rem 0.65rem',
+                borderRadius: '6px',
+                border: '1px solid #fcd34d'
+              }}>
+                <div>
+                  <strong style={{ color: '#1e293b', fontSize: '0.82rem' }}>{child.name}</strong>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>
+                    Usia: {child.age ?? 21} Tahun • Status: <span style={{ color: '#ef4444', fontWeight: 600 }}>BELUM UPLOAD SURAT KULIAH</span>
+                  </span>
+                </div>
+                <button
+                  className="btn-primary"
+                  onClick={() => handleOpenUploadModal(child)}
+                  style={{
+                    padding: '0.25rem 0.6rem',
+                    fontSize: '0.75rem',
+                    background: '#d97706',
+                    borderColor: '#b45309',
+                    fontWeight: 500
+                  }}
+                >
+                  📤 Unggah Surat Aktif Kuliah
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="card" style={{ padding: '1rem', borderLeft: '4px solid #2563eb' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Pasangan Tertunjang</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
+      {/* Compact KPI Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginBottom: '0.65rem' }}>
+        <div className="card" style={{ padding: '0.55rem 0.85rem', borderLeft: '4px solid #2563eb' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Pasangan Tertunjang</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
             {activeSpouses.length} {activeSpouses.length > 0 ? `(${activeSpouses[0].name})` : '-'}
           </div>
         </div>
 
-        <div className="card" style={{ padding: '1rem', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Anak Aktif Tertunjang</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#10b981', marginTop: '4px' }}>
+        <div className="card" style={{ padding: '0.55rem 0.85rem', borderLeft: '4px solid #10b981' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Anak Aktif Tertunjang</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981', marginTop: '2px' }}>
             {activeChildren.length} Anak
           </div>
         </div>
 
-        <div className="card" style={{ padding: '1rem', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Perlu Verifikasi (21+ Thn)</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700, color: childrenRequiringLetter.length > 0 ? '#f59e0b' : '#64748b', marginTop: '4px' }}>
+        <div className="card" style={{ padding: '0.55rem 0.85rem', borderLeft: '4px solid #f59e0b' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Perlu Verifikasi (21+ Thn)</div>
+          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: childrenRequiringLetter.length > 0 ? '#f59e0b' : '#64748b', marginTop: '2px' }}>
             {childrenRequiringLetter.length} Anak
           </div>
         </div>
@@ -398,28 +418,28 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
 
       {/* Family Members Table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-main)' }}>Daftar Anggota Keluarga</h4>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total: {members.length} Anggota</span>
+        <div style={{ padding: '0.5rem 0.85rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h4 style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 600 }}>Daftar Anggota Keluarga</h4>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total: {members.length} Anggota</span>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table className="table" style={{ width: '100%', fontSize: '0.88rem' }}>
+          <table className="table" style={{ width: '100%', fontSize: '0.78rem' }}>
             <thead>
-              <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'left' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Nama Anggota</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Hubungan</th>
-                <th style={{ padding: '0.75rem 1rem' }}>NIK</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Tgl Lahir / Usia</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Status Data</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Surat Aktif Kuliah</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>Aksi</th>
+              <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'center' }}>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'left' }}>Nama Anggota</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>Hubungan</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>NIK</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>Tgl Lahir / Usia</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>Status Data</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>Surat Aktif Kuliah</th>
+                <th style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={7} style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Belum ada data anggota keluarga tercatat.
                   </td>
                 </tr>
@@ -430,83 +450,86 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
                   const isAge21Plus = m.age !== undefined && m.age >= 21;
                   const hasLetter = Boolean(m.school_letter_number || m.document_file_name);
 
+                  // Computed status & active boolean
+                  const isChildActive = isChild && (!isAge21Plus || hasLetter);
+
                   return (
                     <tr key={m.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                      <td style={{ padding: '0.35rem 0.6rem', fontWeight: 400, color: 'var(--text-main)', textAlign: 'left' }}>
                         {m.name}
-                        {m.gender && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>({m.gender})</span>}
+                        {m.gender && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '4px' }}>({m.gender})</span>}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
+                      <td style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>
                         <span style={{
-                          padding: '3px 8px',
+                          padding: '2px 6px',
                           borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
+                          fontSize: '0.72rem',
+                          fontWeight: 500,
                           background: isChild ? '#e0f2fe' : '#f3e8ff',
                           color: isChild ? '#0369a1' : '#6b21a8'
                         }}>
                           {m.relationship_type}
                         </span>
                       </td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-main)' }}>{m.nik || '-'}</td>
-                      <td style={{ padding: '0.85rem 1rem', color: 'var(--text-main)' }}>
+                      <td style={{ padding: '0.35rem 0.6rem', color: 'var(--text-main)', textAlign: 'center', fontWeight: 400 }}>{m.nik || '-'}</td>
+                      <td style={{ padding: '0.35rem 0.6rem', color: 'var(--text-main)', textAlign: 'center' }}>
                         {toDisplayFormat(m.birth_date)}
                         {m.age !== undefined && (
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
                             {m.age} Tahun
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        {m.status === 'ACTIVE' ? (
-                          <span className="badge success" style={{ background: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                      <td style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>
+                        {isChildActive || m.relationship_type.toUpperCase().includes('PASANGAN') ? (
+                          <span className="badge success" style={{ background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 500 }}>
                             {hasLetter && isAge21Plus ? '✓ AKTIF (KULIAH)' : 'AKTIF'}
                           </span>
                         ) : (
-                          <span className="badge danger" style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                          <span className="badge danger" style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 500 }}>
                             NONAKTIF (USIA ≥ 21)
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
+                      <td style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>
                         {isChild && isAge21Plus ? (
                           hasLetter ? (
-                            <div style={{ fontSize: '0.8rem' }}>
-                              <span style={{ color: '#15803d', fontWeight: 600 }}>✓ Tersedia</span>
-                              {m.school_letter_number && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>No: {m.school_letter_number}</div>}
+                            <div style={{ fontSize: '0.75rem' }}>
+                              <span style={{ color: '#15803d', fontWeight: 500 }}>✓ Tersedia</span>
+                              {m.school_letter_number && <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>No: {m.school_letter_number}</div>}
                             </div>
                           ) : (
-                            <span style={{ color: '#dc2626', fontSize: '0.78rem', fontWeight: 600 }}>
+                            <span style={{ color: '#dc2626', fontSize: '0.75rem', fontWeight: 500 }}>
                               ⚠️ Belum Upload
                             </span>
                           )
                         ) : (
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>-</span>
                         )}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                      <td style={{ padding: '0.35rem 0.6rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center' }}>
                           {isChild && isAge21Plus && (
                             <button
                               className="btn-secondary"
                               onClick={() => handleOpenUploadModal(m)}
-                              title="Upload Surat Aktif Kuliah"
-                              style={{ padding: '3px 8px', fontSize: '0.78rem', color: '#d97706', borderColor: '#f59e0b' }}
+                              title="Unggah Surat Aktif Kuliah"
+                              style={{ padding: '2px 6px', fontSize: '0.72rem', color: '#d97706', borderColor: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
                             >
-                              📤 Upload Surat
+                              📤 {hasLetter ? 'Edit Surat' : 'Upload Surat'}
                             </button>
                           )}
                           <button
                             className="btn-text"
                             onClick={() => handleOpenEditModal(m)}
-                            style={{ padding: '3px 6px', fontSize: '0.78rem' }}
+                            style={{ padding: '2px 4px', fontSize: '0.72rem' }}
                           >
                             Edit
                           </button>
                           <button
                             className="btn-text"
                             onClick={() => handleDeleteMember(m.id, m.name)}
-                            style={{ padding: '3px 6px', fontSize: '0.78rem', color: '#ef4444' }}
+                            style={{ padding: '2px 4px', fontSize: '0.72rem', color: '#ef4444' }}
                           >
                             Hapus
                           </button>
@@ -521,198 +544,157 @@ const EmployeeFamilyTab: React.FC<Props> = ({ employeeId: propEmpId }) => {
         </div>
       </div>
 
-      {/* Modal Upload Surat Aktif Kuliah */}
+      {/* Upload Modal */}
       {showUploadModal && selectedChild && (
         <div className="modal-backdrop" style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(3px)'
+          justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(2px)'
         }}>
-          <div className="card" style={{
-            width: '560px', maxWidth: '92vw', padding: '1.75rem', background: '#ffffff',
-            borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          <div className="card compact-modal-card" style={{
+            width: '460px', maxWidth: '96vw', padding: '1rem 1.25rem', background: '#ffffff', borderRadius: '10px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1e3a8a' }}>Upload Surat Keterangan Aktif Kuliah</h3>
-                <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  Untuk mengaktifkan kembali data anak: <strong>{selectedChild.name}</strong> (Usia {selectedChild.age ?? 21} Thn)
-                </p>
-              </div>
-              <button onClick={() => setShowUploadModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>&times;</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)' }}>Unggah Surat Aktif Kuliah</h3>
+              <button onClick={() => setShowUploadModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
             </div>
-
             <form onSubmit={handleUploadSubmit}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                    File Surat Keterangan Aktif Kuliah (PDF / JPG / PNG) *
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e: any) => setUploadData({ ...uploadData, file: e.target.files ? e.target.files[0] : null })}
-                    style={{ width: '100%', padding: '0.4rem', border: '1px solid var(--border-color)', borderRadius: '6px' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                    Nomor Surat Keterangan *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: 421.3/102/UNSYIAH/2026"
-                    value={uploadData.school_letter_number}
-                    onChange={(e: any) => setUploadData({ ...uploadData, school_letter_number: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '6px' }}
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                      Tanggal Surat
-                    </label>
-                    <DateInput
-                      name="school_letter_date"
-                      value={uploadData.school_letter_date}
-                      onChange={(e: any) => setUploadData({ ...uploadData, school_letter_date: e.target.value })}
-                      placeholder="dd/mm/yyyy"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                      Masa Berlaku s/d
-                    </label>
-                    <DateInput
-                      name="school_letter_valid_until"
-                      value={uploadData.school_letter_valid_until}
-                      onChange={(e: any) => setUploadData({ ...uploadData, school_letter_valid_until: e.target.value })}
-                      placeholder="dd/mm/yyyy"
-                    />
-                  </div>
-                </div>
+              <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '0.6rem' }}>
+                Anggota: <strong>{selectedChild.name}</strong> (Usia: {selectedChild.age || 21} Tahun)
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <button type="button" className="btn-secondary" onClick={() => setShowUploadModal(false)}>Batal</button>
-                <button type="submit" className="btn-primary" style={{ background: '#d97706', borderColor: '#b45309' }}>
-                  Simpan & Aktifkan Data Anak
-                </button>
+              <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nomor Surat Keterangan *</label>
+                <input
+                  type="text"
+                  required
+                  value={uploadData.school_letter_number}
+                  onChange={(e) => setUploadData(prev => ({ ...prev, school_letter_number: e.target.value }))}
+                  placeholder="Contoh: 421.3/SK/2026"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Surat *</label>
+                <DateInput
+                  name="school_letter_date"
+                  value={uploadData.school_letter_date}
+                  onChange={(e) => setUploadData(prev => ({ ...prev, school_letter_date: e.target.value }))}
+                  placeholder="dd/mm/yyyy"
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Berlaku Sampai *</label>
+                <DateInput
+                  name="school_letter_valid_until"
+                  value={uploadData.school_letter_valid_until}
+                  onChange={(e) => setUploadData(prev => ({ ...prev, school_letter_valid_until: e.target.value }))}
+                  placeholder="dd/mm/yyyy"
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '0.8rem' }}>
+                <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>File Berkas (PDF/JPG)</label>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => setUploadData(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
+                  style={{ fontSize: '0.78rem' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowUploadModal(false)} style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem' }}>Batal</button>
+                <button type="submit" className="btn-primary" style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem' }}>Simpan Berkas</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Add/Edit Family Member */}
+      {/* Member Modal */}
       {showMemberModal && (
         <div className="modal-backdrop" style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(3px)'
+          justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(2px)'
         }}>
-          <div className="card" style={{
-            width: '600px', maxWidth: '92vw', padding: '1.75rem', background: '#ffffff',
-            borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          <div className="card compact-modal-card" style={{
+            width: '600px', maxWidth: '96vw', padding: '1rem 1.25rem', background: '#ffffff', borderRadius: '10px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
+              <h3 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-main)' }}>
                 {editingMember ? 'Edit Anggota Keluarga' : 'Tambah Anggota Keluarga'}
               </h3>
-              <button onClick={() => setShowMemberModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}>&times;</button>
+              <button onClick={() => setShowMemberModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
             </div>
-
             <form onSubmit={handleMemberFormSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 0.6rem' }}>
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Hubungan Keluarga *</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Hubungan Keluarga *</label>
                   <select
                     value={memberFormData.relationship_type}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, relationship_type: e.target.value })}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, relationship_type: e.target.value }))}
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
                   >
-                    <option value="SUAMI">SUAMI</option>
-                    <option value="ISTRI">ISTRI</option>
-                    <option value="ANAK">ANAK KANDUNG</option>
-                    <option value="ANAK TIRI">ANAK TIRI</option>
-                    <option value="ANAK ANGKAT">ANAK ANGKAT</option>
+                    <option value="PASANGAN">PASANGAN (Suami/Istri)</option>
+                    <option value="ANAK">ANAK</option>
                   </select>
                 </div>
-
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Nama Lengkap *</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Nama Lengkap *</label>
                   <input
                     type="text"
-                    value={memberFormData.name}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, name: e.target.value })}
                     required
+                    value={memberFormData.name}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nama Lengkap"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>NIK</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>NIK</label>
                   <input
                     type="text"
                     value={memberFormData.nik}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, nik: e.target.value })}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, nik: e.target.value }))}
+                    placeholder="16 digit NIK"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Jenis Kelamin</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Jenis Kelamin</label>
                   <select
                     value={memberFormData.gender}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, gender: e.target.value })}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, gender: e.target.value }))}
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
                   >
                     <option value="L">Laki-laki (L)</option>
                     <option value="P">Perempuan (P)</option>
                   </select>
                 </div>
-
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tempat Lahir</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tempat Lahir</label>
                   <input
                     type="text"
                     value={memberFormData.birth_place}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, birth_place: e.target.value })}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, birth_place: e.target.value }))}
+                    placeholder="Kota Lahir"
+                    style={{ fontSize: '0.8rem', padding: '0.35rem 0.5rem' }}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Tanggal Lahir</label>
+                  <label style={{ fontSize: '0.76rem', fontWeight: 600 }}>Tanggal Lahir</label>
                   <DateInput
                     name="birth_date"
                     value={memberFormData.birth_date}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, birth_date: e.target.value })}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, birth_date: e.target.value }))}
                     placeholder="dd/mm/yyyy"
                   />
                 </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pekerjaan</label>
-                  <input
-                    type="text"
-                    value={memberFormData.job}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, job: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pendidikan</label>
-                  <input
-                    type="text"
-                    value={memberFormData.education}
-                    onChange={(e: any) => setMemberFormData({ ...memberFormData, education: e.target.value })}
-                  />
-                </div>
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                <button type="button" className="btn-secondary" onClick={() => setShowMemberModal(false)}>Batal</button>
-                <button type="submit" className="btn-primary">Simpan Data</button>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                <button type="button" className="btn-secondary" onClick={() => setShowMemberModal(false)} style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem' }}>Batal</button>
+                <button type="submit" className="btn-primary" style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem' }}>Simpan Anggota</button>
               </div>
             </form>
           </div>
