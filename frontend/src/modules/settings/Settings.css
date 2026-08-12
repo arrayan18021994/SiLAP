@@ -1,27 +1,40 @@
 .settings-layout {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.5rem;
   height: calc(100vh - 120px);
 }
 
 .settings-sidebar {
-  width: 250px;
+  width: 100%;
   background: var(--card-bg);
   border-radius: 12px;
   border: 1px solid var(--border-color);
-  padding: 1rem 0;
+  padding: 0 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
+  overflow-x: auto;
+  align-items: center;
+  /* Hide scrollbar for clean look */
+  scrollbar-width: none;
+}
+
+.settings-sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .settings-nav-item {
-  padding: 0.8rem 1.5rem;
+  flex: 1;
+  text-align: center;
+  padding: 1rem 1.5rem;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
-  border-left: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
 }
 
 .settings-nav-item:hover {
@@ -32,7 +45,7 @@
 .settings-nav-item.active {
   background-color: rgba(59, 130, 246, 0.1);
   color: var(--primary-color);
-  border-left: 3px solid var(--primary-color);
+  border-bottom: 3px solid var(--primary-color);
 }
 
 .settings-content {
@@ -133,3 +146,16 @@ input:checked + .toggle-slider:before {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
+.settings-table-container { overflow-x: auto; margin-top: 1rem; }
+.settings-table { width: 100%; border-collapse: collapse; }
+.settings-table th, .settings-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+.settings-table th { background: rgba(0,0,0,0.02); font-weight: 600; color: var(--text-muted); }
+.status-badge { padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+.status-badge.active { background: #dcfce7; color: #166534; }
+.status-badge.inactive { background: #fee2e2; color: #991b1b; }
+.radio-group { display: flex; gap: 1rem; margin-top: 0.5rem; }
+.radio-option { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.margin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.margin-input-group { display: flex; align-items: center; gap: 0.5rem; }
+.margin-input-group input { width: 80px; }

@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///../data/database/silap.db"
     
     # Local Installation Paths
+    DATA_DIR: str = "../data"
+    DOCUMENTS_DIR: str = "../documents"
     LOCAL_IDENTITY_PATH: str = "../local/installation/identity.json"
 
     # Security (Default, should be updated for prod but this is a local app)

@@ -12,16 +12,17 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you would fetch from the API.
-    // fetch('http://localhost:8000/api/v1/system/status')
-    //   .then(res => res.json())
-    //   .then(data => { setSystemStatus(data.status); setLoading(false); })
-    
-    // For Phase 0 mock, we will just simulate a fetch
-    setTimeout(() => {
-      setSystemStatus("ACTIVE"); // Mock ACTIVE for UI preview
-      setLoading(false);
-    }, 500);
+    fetch('http://localhost:8000/api/v1/system/status')
+      .then(res => res.json())
+      .then(data => { 
+        setSystemStatus(data.status); 
+        setLoading(false); 
+      })
+      .catch(err => {
+        console.error("Failed to fetch system status:", err);
+        setSystemStatus("ERROR");
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
@@ -43,6 +44,20 @@ function App() {
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
+        )}
+
+        {/* Error Route */}
+        {(!systemStatus || systemStatus === "ERROR") && (
+          <Route path="*" element={
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#1e293b', marginTop: '20vh' }}>
+              <h1 style={{ marginBottom: '1rem' }}>Sistem Tidak Dapat Diakses</h1>
+              <p style={{ color: '#475569', maxWidth: '500px', margin: '0 auto' }}>
+                Gagal terhubung ke server backend. Aplikasi ini membutuhkan server backend untuk berjalan.<br/><br/>
+                Pastikan Anda telah <b>menginstal Python</b> dan menjalankan server backend di port 8000.
+              </p>
+              <button className="btn-primary" onClick={() => window.location.reload()} style={{marginTop: '2rem'}}>Coba Lagi</button>
+            </div>
+          } />
         )}
       </Routes>
     </Router>

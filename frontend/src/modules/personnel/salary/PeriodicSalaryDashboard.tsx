@@ -1,64 +1,67 @@
-import React from 'react';
+import React, { useState } from 'react';
+import MonthFilter from '../../../components/MonthFilter';
 import '../../leave/Leave.css';
 
+const MONTHS = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+
 const PeriodicSalaryDashboard: React.FC = () => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   return (
     <div className="leave-dashboard">
-      <div className="page-header">
-        <h2>Dashboard Gaji Berkala (KGB)</h2>
-        <div className="header-actions">
-          <button className="btn-secondary">Export Laporan</button>
+      <div className="page-header" style={{ marginBottom: '1.5rem' }}>
+        <div>
+          <h2>GAJI BERKALA</h2>
+          <p>Periode: {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}</p>
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="dashboard-card text-center" style={{ borderTop: "4px solid #b91c1c" }}>
-          <h2 style={{ color: "#b91c1c" }}>1</h2>
-          <p className="text-muted">Jatuh Tempo Hari Ini</p>
-        </div>
-        <div className="dashboard-card text-center" style={{ borderTop: "4px solid #f59e0b" }}>
-          <h2 style={{ color: "#f59e0b" }}>8</h2>
-          <p className="text-muted">Jatuh Tempo ≤ 30 Hari</p>
-        </div>
-        <div className="dashboard-card text-center" style={{ borderTop: "4px solid #0ea5e9" }}>
-          <h2>12</h2>
-          <p className="text-muted">Jatuh Tempo 31-60 Hari</p>
-        </div>
-        <div className="dashboard-card text-center" style={{ borderTop: "4px solid var(--text-main)" }}>
-          <h2>43</h2>
-          <p className="text-muted">{'> 90 Hari'}</p>
-        </div>
-      </div>
+      <MonthFilter currentDate={currentDate} onChange={setCurrentDate} />
 
-      <div className="dashboard-card mt-4">
-        <h3>Daftar Pegawai Memasuki Periode KGB</h3>
-        <table className="table mt-3">
+      <div className="dashboard-card" style={{ marginTop: '1.5rem' }}>
+        <table className="table" style={{ width: '100%', fontSize: '13px' }}>
           <thead>
-            <tr>
-              <th>NIP</th>
-              <th>Nama Pegawai</th>
-              <th>KGB Terakhir</th>
-              <th>Proyeksi KGB Berikutnya</th>
-              <th>Status Administrasi</th>
-              <th>Aksi</th>
+            <tr style={{ color: 'var(--text-muted)' }}>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>No</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>Nama</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>NIP</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>Pangkat/Golongan</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>KGB Terakhir</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>TMT KGB Berikutnya</th>
+              <th style={{ textAlign: 'left', padding: '1rem' }}>Status</th>
+              <th style={{ textAlign: 'center', padding: '1rem' }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>198501012010011001</td>
-              <td>Ahmad Budi</td>
-              <td>01/04/2025</td>
-              <td><strong>01/04/2027</strong></td>
-              <td><span className="badge warning">PROCESSING</span></td>
-              <td><button className="btn-text">Detail</button></td>
+            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <td style={{ padding: '1rem' }}>1</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Ahmad Budi, S.E.</td>
+              <td style={{ padding: '1rem' }}>198501012010011001</td>
+              <td style={{ padding: '1rem' }}>Penata (III/c)</td>
+              <td style={{ padding: '1rem' }}>01/08/2024</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>01/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
+              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>READY</span></td>
+              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
             </tr>
-            <tr>
-              <td>199002022015022002</td>
-              <td>Siti Aminah</td>
-              <td>01/10/2025</td>
-              <td><strong>01/10/2027</strong></td>
-              <td><span className="badge default">DRAFT</span></td>
-              <td><button className="btn-text">Detail</button></td>
+            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <td style={{ padding: '1rem' }}>2</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Budi Santoso, S.Sos.</td>
+              <td style={{ padding: '1rem' }}>197902022005022002</td>
+              <td style={{ padding: '1rem' }}>Pembina (IV/a)</td>
+              <td style={{ padding: '1rem' }}>01/08/2024</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>01/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
+              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>NEEDS_REVIEW</span></td>
+              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
+            </tr>
+            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <td style={{ padding: '1rem' }}>3</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>Citra Lestari, S.E.</td>
+              <td style={{ padding: '1rem' }}>199203032015032003</td>
+              <td style={{ padding: '1rem' }}>Penata Muda (III/a)</td>
+              <td style={{ padding: '1rem' }}>15/08/2024</td>
+              <td style={{ padding: '1rem', fontWeight: 'bold' }}>15/{String(currentDate.getMonth()+1).padStart(2, '0')}/{currentDate.getFullYear()}</td>
+              <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>PROPOSAL_CREATED</span></td>
+              <td style={{ padding: '1rem', textAlign: 'center' }}><button className="btn-text">Detail</button></td>
             </tr>
           </tbody>
         </table>

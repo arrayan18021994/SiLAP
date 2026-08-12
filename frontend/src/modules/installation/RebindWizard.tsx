@@ -1,24 +1,41 @@
 import React, { useState } from 'react';
 import './Installation.css';
+import Logo from '../../components/Logo';
 
 const RebindWizard: React.FC = () => {
   const [credential, setCredential] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleRebind = () => {
+  const handleRebind = async () => {
     setLoading(true);
-    // Mock API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/setup/rebind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activation_credential: credential })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Rebind gagal');
+      }
+      
       alert("Database berhasil di-rebind ke perangkat ini!");
       window.location.reload();
-    }, 1000);
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="wizard-container">
       <div className="wizard-card">
-        <h1>Instalasi Baru Terdeteksi</h1>
-        <p className="subtitle">Database SiLAP ditemukan, namun belum terikat pada perangkat ini.</p>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <Logo style={{ height: '80px' }} />
+        </div>
+        <p className="subtitle" style={{ textAlign: 'center', marginBottom: '2rem' }}>Sistem Layanan Administrasi Pegawai</p>
         
         <div className="step-content">
           <p className="warning-text">

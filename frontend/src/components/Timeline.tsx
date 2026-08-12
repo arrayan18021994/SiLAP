@@ -26,7 +26,7 @@ const Timeline: React.FC<TimelineProps> = ({ groups }) => {
         <div key={`group-${groupIndex}`} className="timeline-group">
           <div className="timeline-year">{group.year}</div>
           <div className="timeline-events">
-            {group.events.map((event, eventIndex) => (
+            {group.events.map((event) => (
               <div key={event.id} className="timeline-event">
                 <div className="timeline-line"></div>
                 <div 

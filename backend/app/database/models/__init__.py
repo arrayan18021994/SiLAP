@@ -1,5 +1,6 @@
 from .core import (
     User,
+    PasswordResetOTP,
     Installation,
     InstallationSecurity,
     OrganizationSettings,
